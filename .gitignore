@@ -1,5 +1,8 @@
 build/
 
+*.gtkw
+*.pdf
+
 # gcc artifacts
 *.o
 *.elf
