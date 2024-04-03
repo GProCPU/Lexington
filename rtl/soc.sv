@@ -19,13 +19,19 @@ module soc #(
         parameter UART0_FIFO_DEPTH      = DEFAULT_UART_FIFO_DEPTH       // FIFO depth for both TX and RX (depth 0 is invalid)
     ) (
         input  logic clk,                       // system clock
+        input  logic pxclk,                     // VGA pixel clock
         input  logic rst_n,                     // reset signal (active-low)
 
         inout  logic [15:0] gpioa,
         inout  logic [15:0] gpiob,
         inout  logic [15:0] gpioc,
         input  logic uart0_rx,
-        output logic uart0_tx
+        output logic uart0_tx,
+        output logic [3:0] vga_r,
+        output logic [3:0] vga_g,
+        output logic [3:0] vga_b,
+        output logic vga_hs,
+        output logic vga_vs
     );
 
     // Core Parameters
@@ -81,7 +87,8 @@ module soc #(
     axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(GPIO_ADDR_WIDTH)) axi_gpioa();
     axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(GPIO_ADDR_WIDTH)) axi_gpiob();
     axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(GPIO_ADDR_WIDTH)) axi_gpioc();
-    axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(UART_ADDR_WIDTH)) axi_uart0();
+    // axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(UART_ADDR_WIDTH)) axi_uart0();
+    axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(VGA_ADDR_WIDTH)) axi_vga();
     ////////////////////////////////////////////////////////////
     // END: Internal Wires
     ////////////////////////////////////////////////////////////
@@ -206,17 +213,20 @@ module soc #(
         .S00_ADDR_WIDTH(GPIO_ADDR_WIDTH),
         .S01_ADDR_WIDTH(GPIO_ADDR_WIDTH),
         .S02_ADDR_WIDTH(GPIO_ADDR_WIDTH),
-        .S03_ADDR_WIDTH(UART_ADDR_WIDTH),
+        // .S03_ADDR_WIDTH(UART_ADDR_WIDTH),
+        .S03_ADDR_WIDTH(VGA_ADDR_WIDTH),
         .S00_BASE_ADDR(GPIOA_BASE_ADDR),
         .S01_BASE_ADDR(GPIOB_BASE_ADDR),
         .S02_BASE_ADDR(GPIOC_BASE_ADDR),
-        .S03_BASE_ADDR(UART0_BASE_ADDR)
+        // .S03_BASE_ADDR(UART0_BASE_ADDR)
+        .S03_BASE_ADDR(VGA_BASE_ADDR)
     ) CROSSBAR (
         .axi_m,
         .axi_s00(axi_gpioa),
         .axi_s01(axi_gpiob),
         .axi_s02(axi_gpioc),
-        .axi_s03(axi_uart0)
+        // .axi_s03(axi_uart0)
+        .axi_s03(axi_vga)
     );
     ////////////////////////////////////////////////////////////
     // END: AXI Manager & Crossbar Instantiation
@@ -257,24 +267,48 @@ module soc #(
         .int1(gpioc_int_1),
         .axi(axi_gpioc)
     );
-    uart #(
-        .WIDTH(rv32::XLEN),
-        .BUS_CLK(CLK_FREQ),
-        .BAUD(UART0_BAUD),
-        .FIFO_DEPTH(UART0_FIFO_DEPTH)
-    ) UART0 (
-        .rx(uart0_rx),
-        .tx(uart0_tx),
-        .rx_int(uart0_rx_int),
-        .tx_int(uart0_tx_int),
-        .dbg_en(0),
-        .dbg_send(),
-        .dbg_recv(),
-        .dbg_dout(),
-        .dbg_din(),
-        .dbg_rx_busy(),
-        .dbg_tx_busy(),
-        .axi(axi_uart0)
+    // uart #(
+    //     .WIDTH(rv32::XLEN),
+    //     .BUS_CLK(CLK_FREQ),
+    //     .BAUD(UART0_BAUD),
+    //     .FIFO_DEPTH(UART0_FIFO_DEPTH)
+    // ) UART0 (
+    //     .rx(uart0_rx),
+    //     .tx(uart0_tx),
+    //     .rx_int(uart0_rx_int),
+    //     .tx_int(uart0_tx_int),
+    //     .dbg_en(0),
+    //     .dbg_send(),
+    //     .dbg_recv(),
+    //     .dbg_dout(),
+    //     .dbg_din(),
+    //     .dbg_rx_busy(),
+    //     .dbg_tx_busy(),
+    //     .axi(axi_uart0)
+    // );
+    assign uart0_tx = 0;
+    assign uart0_rx_int = 0;
+    assign uart0_tx_int = 0;
+    vga #(
+        .PIXEL_WIDTH(VGA_PIXEL_WIDTH),
+        .PIXEL_HEIGHT(VGA_PIXEL_HEIGHT),
+        .PIXEL_DEPTH(VGA_PIXEL_DEPTH),
+        .H_SYNC_PULSE(VGA_H_SYNC_PULSE),
+        .H_BACK_PORCH(VGA_H_BACK_PORCH),
+        .H_FRONT_PORCH(VGA_H_FRONT_PORCH),
+        .V_SYNC_PULSE(VGA_V_SYNC_PULSE),
+        .V_BACK_PORCH(VGA_V_BACK_PORCH),
+        .V_FRONT_PORCH(VGA_V_FRONT_PORCH),
+        .AXI_DATA_WIDTH(rv32::XLEN)
+    ) VGA0 (
+        .pxclk,
+        .rst_n,
+        .r(vga_r),
+        .g(vga_g),
+        .b(vga_b),
+        .hsync(vga_hs),
+        .vsync(vga_vs),
+        .axi(axi_vga)
     );
     assign timer0_int = 0;
     assign timer1_int = 0;

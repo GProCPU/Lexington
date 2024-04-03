@@ -34,6 +34,7 @@ All subordinates must have the same address width.
 
 | Address | Device |
 | --- | --- |
+| 0xFFD0_0000 - 0xFFD3_FFFF | `VGA` |
 | 0xFFFF_FF00 - 0xFFFF_FF0F | `TIM0` |
 | 0xFFFF_FF10 - 0xFFFF_FF1F | `TIM1` |
 | 0xFFFF_FF70 - 0xFFFF_FF8F | `UART0` |

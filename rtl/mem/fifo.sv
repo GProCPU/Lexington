@@ -24,12 +24,13 @@ module fifo #(
     // Read/Write pointers
     logic [$clog2(DEPTH)-1:0] head;
     logic [$clog2(DEPTH)-1:0] tail;
+    logic _wr_en;
 
     generate if (FIRST_WORD_FALLTHROUGH) begin
         assign dout = ram[head];
     end endgenerate
     assign full = (!empty) && (head == tail);
-    assign wr_en = wr_en && !full;
+    assign _wr_en = wr_en && !full;
 
 
     always_ff @(posedge clk) begin
@@ -39,7 +40,7 @@ module fifo #(
             empty = 1;
         end
         else begin
-            if (wr_en && !full) begin
+            if (_wr_en && !full) begin
                 ram[tail] <= din;
                 tail <= (tail < DEPTH-1) ? tail+1 : 0;
             end
@@ -50,13 +51,13 @@ module fifo #(
                 head <= (head < DEPTH-1) ? head+1 : 0;
                 if (head < DEPTH-1) begin
                     head <= head + 1;
-                    if (!wr_en && (head+1)==tail) begin
+                    if (!_wr_en && (head+1)==tail) begin
                         empty <= 1;
                     end
                 end
                 else begin
                     head <= 0;
-                    if (!wr_en && tail==0) begin
+                    if (!_wr_en && tail==0) begin
                         empty <= 1;
                     end
                 end

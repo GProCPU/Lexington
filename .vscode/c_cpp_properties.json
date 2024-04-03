@@ -16,9 +16,9 @@
         {
             "name": "rv32i",
             "includePath": [
-                "/opt/riscv/lib/**",
-                "${default}",
-                "${workspaceFolder}/sw/lib/inc/**"
+                "/opt/riscv/lib/gcc/riscv32-unknown-elf/12.2.0/include",
+                "${workspaceFolder}/sw/lib/inc/**",
+                "${default}"
             ],
             "defines": [],
             "compilerPath": "/opt/riscv/bin/riscv32-unknown-elf-gcc",

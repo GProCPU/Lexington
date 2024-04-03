@@ -8,6 +8,7 @@ extern "C" {
 
 // Standard libraries
 #include <stdint.h>
+#include <stdbool.h>
 #include <limits.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -19,6 +20,7 @@ extern "C" {
 #include "time.h"
 #include "gpio.h"
 #include "uart.h"
+#include "vga.h"
 
 
 // Endianness
