@@ -47,9 +47,9 @@ module vga #(
 
     // Not parameterized to PIXEL_DEPTH
     // RGB332
-    assign r = {rgb[7:5], 1'b0};
-    assign g = {rgb[4:2], 1'b0};
-    assign b = {rgb[1:0], 2'b00};
+    assign r = {rgb[7:5], rgb[5]};
+    assign g = {rgb[4:2], rgb[2]};
+    assign b = {rgb[1:0], rgb[1:0]};
     assign rgb = (state == VISIBLE) ? px_data : 0;
 
     always_ff @(posedge pxclk) begin

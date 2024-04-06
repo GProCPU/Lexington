@@ -25,8 +25,10 @@ module vga_timing #(
     typedef enum {SYNC, BACK_PORCH, VISIBLE, FRONT_PORCH} state_t;
     state_t hstate;
     state_t vstate;
-    logic v_enable;
+    logic v_trig;
 
+
+    assign addr_valid = (hstate == VISIBLE) & (vstate == VISIBLE);
 
     // H Sync
     always_ff @(posedge pxclk) begin
@@ -34,16 +36,15 @@ module vga_timing #(
             hstate  <= FRONT_PORCH;
             hsync   <= 0;
             xaddr   <= 0;
-            addr_valid  <= 0;
-            v_enable    <= 0;
+            v_trig  <= 0;
         end
         else begin
             case (hstate)
 
                 SYNC: begin
-                    v_enable <= 0;
+                    v_trig <= 0;
                     if (xaddr < H_SYNC_PULSE-1) begin
-                        xaddr <= xaddr + 1;
+                        xaddr   <= xaddr + 1;
                     end
                     else begin
                         hstate  <= BACK_PORCH;
@@ -54,35 +55,33 @@ module vga_timing #(
 
                 BACK_PORCH: begin
                     if (xaddr < H_BACK_PORCH-1) begin
-                        xaddr <= xaddr + 1;
+                        xaddr   <= xaddr + 1;
                     end
                     else begin
                         hstate  <= VISIBLE;
                         xaddr   <= 0;
-                        addr_valid  <= 1;
                     end
                 end
 
                 VISIBLE: begin
                     if (xaddr < PIXEL_WIDTH-1) begin
-                        xaddr <= xaddr + 1;
+                        xaddr   <= xaddr + 1;
                     end
                     else begin
                         hstate  <= FRONT_PORCH;
                         xaddr   <= 0;
-                        addr_valid  <= 0;
                     end
                 end
 
                 FRONT_PORCH: begin
                     if (xaddr < H_FRONT_PORCH-1) begin
+                        xaddr   <= xaddr + 1;
                     end
                     else begin
                         hstate  <= SYNC;
                         hsync   <= 1;
                         xaddr   <= 0;
-                        addr_valid  <= 0;
-                        v_enable    <= 1;
+                        v_trig  <= 1;
                     end
                 end
 
@@ -90,7 +89,7 @@ module vga_timing #(
                     hstate  <= FRONT_PORCH;
                     hsync   <= 0;
                     xaddr   <= 0;
-                    v_enable  <= 0;
+                    v_trig  <= 0;
                 end
 
             endcase
@@ -105,12 +104,12 @@ module vga_timing #(
             vsync   <= 0;
             yaddr   <= 0;
         end
-        else if (v_enable) begin
+        else if (v_trig) begin
             case (vstate)
 
                 SYNC: begin
                     if (yaddr < V_SYNC_PULSE-1) begin
-                        yaddr <= yaddr + 1;
+                        yaddr   <= yaddr + 1;
                     end
                     else begin
                         vstate  <= BACK_PORCH;
@@ -121,7 +120,7 @@ module vga_timing #(
 
                 BACK_PORCH: begin
                     if (yaddr < V_BACK_PORCH-1) begin
-                        yaddr <= yaddr + 1;
+                        yaddr   <= yaddr + 1;
                     end
                     else begin
                         vstate  <= VISIBLE;
@@ -130,8 +129,8 @@ module vga_timing #(
                 end
 
                 VISIBLE: begin
-                    if (yaddr < PIXEL_WIDTH-1) begin
-                        yaddr <= yaddr + 1;
+                    if (yaddr < PIXEL_HEIGHT-1) begin
+                        yaddr   <= yaddr + 1;
                     end
                     else begin
                         vstate  <= FRONT_PORCH;
@@ -141,6 +140,7 @@ module vga_timing #(
 
                 FRONT_PORCH: begin
                     if (yaddr < V_FRONT_PORCH-1) begin
+                        yaddr   <= yaddr + 1;
                     end
                     else begin
                         vstate  <= SYNC;
@@ -151,7 +151,7 @@ module vga_timing #(
 
                 default: begin
                     vstate  <= FRONT_PORCH;
-                    hsync   <= 0;
+                    vsync   <= 0;
                     yaddr   <= 0;
                 end
 

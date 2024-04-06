@@ -6,9 +6,8 @@
 #define VGA_WIDTH       320
 #define VGA_HEIGHT      240
 
-#define VGA             ((uint16_t*) 0xFFD00000)
-
-typedef uint16_t rgb_t;
+typedef uint8_t rgb_t;
+#define VGA_FRAME_BUFF  ((rgb_t*) 0xFFD00000)
 
 
 void vga_draw_pixel(int32_t x, int32_t y, rgb_t color);

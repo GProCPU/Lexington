@@ -7,7 +7,6 @@
 //depend axi4_lite_manager.sv
 //depend axi4_lite_crossbar4.sv
 //depend peripheral/*.sv
-//depend peripheral/vga/*.sv
 `timescale 1ns/1ps
 
 
