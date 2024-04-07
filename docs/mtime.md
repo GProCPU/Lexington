@@ -7,7 +7,6 @@
 ### Parameters
 
 - **`XLEN=32`** data width
-- **`CLK_PERIOD=100.0`** clock period in ns
 
 ### Inputs
 
@@ -26,7 +25,7 @@
 ## Behavior
 
 The Machine Timer has two 64-bit registers: `mtime` and `mtimecmp`.
-The `mtime` register is a counter that increments every microsecond.
+The `mtime` register is a counter that increments at the core clock frequency.
 The `mtimecmp` register controls the interrupt behavior.
 If `mtime` is unsigned greater than or equal to `mtimecmp` then the `interrupt` flag is asserted.
 See The [CSR](./CSR.md) documentation for more details.

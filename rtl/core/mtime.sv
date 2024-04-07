@@ -6,9 +6,7 @@
 import lexington::*;
 
 
-module mtime #(
-        parameter CLK_FREQ      = DEFAULT_CLK_FREQ          // core clock in Hz
-    ) (
+module mtime (
         input  logic clk,                                   // system clock
         input  logic rst_n,                                 // reset (active-low)
 
@@ -24,10 +22,6 @@ module mtime #(
 
     logic [63:0] mtime;
     logic [63:0] mtimecmp;
-
-    // internal counter
-    integer counter;
-    logic tick;
 
     assign time_rd_data = mtime;
     assign interrupt = (mtime >= mtimecmp);
@@ -50,12 +44,6 @@ module mtime #(
 
 
     // Write and Increment logic
-    rv32::word _wr_data;
-    generate
-        for (genvar i=0; i<rv32::XLEN; i+=8) begin
-            assign _wr_data[i+7:i] = (wr_strobe[i/8]) ? wr_data[i+7:i] : 0;
-        end
-    endgenerate
     always_ff @(posedge clk) begin
         if (!rst_n) begin
             mtime    <= 0;
@@ -65,32 +53,22 @@ module mtime #(
 
             // Increment
             // overwritten by writes
-            if (tick) mtime <= mtime + 1;
+            mtime <= mtime + 1;
 
             // Write
             if (wr_en) begin
-                case (addr)
-                    'b00: mtime[31:0]       <= _wr_data;
-                    'b01: mtime[63:32]      <= _wr_data;
-                    'b10: mtimecmp[31:0]    <= _wr_data;
-                    'b11: mtimecmp[63:32]   <= _wr_data;
-                endcase
+                for (integer i=0; i<rv32::XLEN; i+=8) begin
+                    if (wr_strobe[i/8]) begin
+                        case (addr)
+                            'b00: mtime[i+:8]           <= wr_data[i+:8];
+                            'b01: mtime[(i+32)+:8]      <= wr_data[i+:8];
+                            'b10: mtimecmp[i+:8]        <= wr_data[i+:8];
+                            'b11: mtimecmp[(i+32)+:8]   <= wr_data[i+:8];
+                        endcase
+                    end
+                end
             end
 
-        end
-    end
-
-
-    // Cycle count logic
-    localparam CLK_PERIOD = 1_000_000_000 / CLK_FREQ;   // clock period in ns
-    localparam integer CYCLES_PER_TICK = MTIME_PERIOD / CLK_PERIOD;
-    assign tick = (counter == CYCLES_PER_TICK-1);
-    always_ff @(posedge clk) begin
-        if (!rst_n) begin
-            counter <= 0;
-        end
-        else begin
-            counter <= (tick) ? 0 : counter+1;
         end
     end
 

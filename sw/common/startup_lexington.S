@@ -6,6 +6,7 @@
 .global __startup_entry
 .global __startup_main_exit
 
+
 _start:
 __startup_entry:
 .cfi_startproc
@@ -130,86 +131,98 @@ __startup_trap_handler_end:
 
 
 
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+// BEGIN: Trap handlers (vectored mode only)
+//////////////////////////////////////////////////
+
 // Interrupt Vector Table
 .balign 128
 __INTERRUPT_VECTOR_TABLE:
     .weak   __INTERRUPT_VECTOR_TABLE
-    j       __MAIN_TRAP_HANDLER     // 0: non-maskable interrupt / exceptions
-    j       __SSI_HANDLER           // 1: supervisor-mode software interrupt
-    j       __DEFAULT_INT_HANDLER   // 2: reserved
-    j       __MSI_HANDLER           // 3: machine-mode software interrupt
-    j       __DEFAULT_INT_HANDLER   // 4: reserved
-    j       __STI_HANDLER           // 5: supervisor-mode timer interrupt
-    j       __DEFAULT_INT_HANDLER   // 6: reserved
-    j       __MTI_HANDLER           // 7: machine-mode timer interrupt
-    j       __DEFAULT_INT_HANDLER   // 8: reserved
-    j       __SEI_HANDLER           // 9: supervisor-mode external interrupt
-    j       __DEFAULT_INT_HANDLER   // 10: reserved
-    j       __MEI_HANDLER           // 11: machine-mode external interrupt
-    j       __DEFAULT_INT_HANDLER   // 12: reserved
-    j       __DEFAULT_INT_HANDLER   // 13: reserved
-    j       __DEFAULT_INT_HANDLER   // 14: reserved
-    j       __DEFAULT_INT_HANDLER   // 15: reserved
-    j       __UART0RX_HANDLER       // 16: UART0 RX interrupt
-    j       __UART0TX_HANDLER       // 17: UART0 TX interrupt
-    j       __TIM0_HANDLER          // 18: general-purpose timer 0 interrupt
-    j       __TIM1_HANDLER          // 19: general-purpose timer 1 interrupt
-    j       __GPIOA0_HANDLER        // 20: GPIOA interrupt 0
-    j       __GPIOA1_HANDLER        // 21: GPIOA interrupt 1
-    j       __GPIOB0_HANDLER        // 22: GPIOB interrupt 0
-    j       __GPIOB1_HANDLER        // 23: GPIOB interrupt 1
-    j       __GPIOC0_HANDLER        // 24: GPIOC interrupt 0
-    j       __GPIOC1_HANDLER        // 25: GPIOC interrupt 1
-    j       __DEFAULT_INT_HANDLER   // 26: reserved
-    j       __DEFAULT_INT_HANDLER   // 27: reserved
-    j       __DEFAULT_INT_HANDLER   // 28: reserved
-    j       __DEFAULT_INT_HANDLER   // 29: reserved
-    j       __DEFAULT_INT_HANDLER   // 30: reserved
-    j       __DEFAULT_INT_HANDLER   // 31: reserved
+    j       __FIRST_LEVEL_TRAP_HANDLER          // 0: non-maskable interrupt / exceptions
+    j       __SSI_HANDLER                       // 1: supervisor-mode software interrupt
+    j       __DEFAULT_INT_HANDLER               // 2: reserved
+    j       __MSI_HANDLER                       // 3: machine-mode software interrupt
+    j       __DEFAULT_INT_HANDLER               // 4: reserved
+    j       __STI_HANDLER                       // 5: supervisor-mode timer interrupt
+    j       __DEFAULT_INT_HANDLER               // 6: reserved
+    j       __MTI_HANDLER                       // 7: machine-mode timer interrupt
+    j       __DEFAULT_INT_HANDLER               // 8: reserved
+    j       __SEI_HANDLER                       // 9: supervisor-mode external interrupt
+    j       __DEFAULT_INT_HANDLER               // 10: reserved
+    j       __MEI_HANDLER                       // 11: machine-mode external interrupt
+    j       __DEFAULT_INT_HANDLER               // 12: reserved
+    j       __DEFAULT_INT_HANDLER               // 13: reserved
+    j       __DEFAULT_INT_HANDLER               // 14: reserved
+    j       __DEFAULT_INT_HANDLER               // 15: reserved
+    j       __UART0RX_HANDLER                   // 16: UART0 RX interrupt
+    j       __UART0TX_HANDLER                   // 17: UART0 TX interrupt
+    j       __TIM0_HANDLER                      // 18: general-purpose timer 0 interrupt
+    j       __TIM1_HANDLER                      // 19: general-purpose timer 1 interrupt
+    j       __GPIOA0_HANDLER                    // 20: GPIOA interrupt 0
+    j       __GPIOA1_HANDLER                    // 21: GPIOA interrupt 1
+    j       __GPIOB0_HANDLER                    // 22: GPIOB interrupt 0
+    j       __GPIOB1_HANDLER                    // 23: GPIOB interrupt 1
+    j       __GPIOC0_HANDLER                    // 24: GPIOC interrupt 0
+    j       __GPIOC1_HANDLER                    // 25: GPIOC interrupt 1
+    j       __DEFAULT_INT_HANDLER               // 26: reserved
+    j       __DEFAULT_INT_HANDLER               // 27: reserved
+    j       __DEFAULT_INT_HANDLER               // 28: reserved
+    j       __DEFAULT_INT_HANDLER               // 29: reserved
+    j       __DEFAULT_INT_HANDLER               // 30: reserved
+    j       __DEFAULT_INT_HANDLER               // 31: reserved
 
 // Exception Vector Table
 .balign 4
 __EXCEPTION_VECTOR_TABLE:
     .weak   __EXCEPTION_VECTOR_TABLE
-    j       __INST_MISALIGNED_HANDLER       // 0
-    j       __INST_ACCESS_FAULT_HANDLER     // 1
-    j       __ILLEGAL_INST_HANDLER          // 2
-    j       __BREAKPOINT_HANDLER            // 3
-    j       __LOAD_MISALIGNED_HANDLER       // 4
-    j       __LOAD_ACCESS_FAULT_HANDLER     // 5
-    j       __STORE_MISALIGNED_HANDLER      // 6
-    j       __STORE_ACCESS_FAULT_HANDLER    // 7
-    j       __ECALL_UMODE_HANDLER           // 8
-    j       __ECALL_SMODE_HANDLER           // 9
-    j       __UNKNOWN_EX_HANDLER            // 10
-    j       __ECALL_MMODE_HANDLER           // 11
-    j       __INST_PAGE_FAULT_HANDLER       // 12
-    j       __LOAD_PAGE_FAULT_HANDLER       // 13
-    j       __STORE_PAGE_FAULT_HANDLER      // 14
+    j       __INST_MISALIGNED_HANDLER           // 0
+    j       __INST_ACCESS_FAULT_HANDLER         // 1
+    j       __ILLEGAL_INST_HANDLER              // 2
+    j       __BREAKPOINT_HANDLER                // 3
+    j       __LOAD_MISALIGNED_HANDLER           // 4
+    j       __LOAD_ACCESS_FAULT_HANDLER         // 5
+    j       __STORE_MISALIGNED_HANDLER          // 6
+    j       __STORE_ACCESS_FAULT_HANDLER        // 7
+    j       __ECALL_UMODE_HANDLER               // 8
+    j       __ECALL_SMODE_HANDLER               // 9
+    j       __UNKNOWN_EX_HANDLER                // 10
+    j       __ECALL_MMODE_HANDLER               // 11
+    j       __INST_PAGE_FAULT_HANDLER           // 12
+    j       __LOAD_PAGE_FAULT_HANDLER           // 13
+    j       __STORE_PAGE_FAULT_HANDLER          // 14
+
+
+// First-level trap handler (vectored mode only)
+__FIRST_LEVEL_TRAP_HANDLER:
+    addi    sp, sp, -8          // save registers (must be restored by ex handler)
+    sw      t0, 0(sp)
+    sw      t1, 4(sp)
+    csrr    t0, mcause          // get trap cause
+    blt     t0, zero, __UNKNOWN_EX_HANDLER // interrupts (i.e. direct mode) not supported by this handler
+    sll     t0, t0, 2           // prep exception vector offset
+    la      t1, __EXCEPTION_VECTOR_TABLE
+    add     t0, t0, t1          // calculate jump address
+    jr      t0                  // jump to exception handler
 
 
 // Misaligned data access handling
-__LOAD_MISALIGNED_HANDLER:          // trap code 4__DEFAULT_INT_HANDLER
+__LOAD_MISALIGNED_HANDLER:      // trap code 4
     .weak   __LOAD_MISALIGNED_HANDLER
     j       .
-__STORE_MISALIGNED_HANDLER:         // trap code 6
+    # lw      t0, 0(sp)           // restore registers
+    # lw      t1, 4(sp)
+    # addi    sp, sp, 8
+    # mret                        // return from trap
+
+__STORE_MISALIGNED_HANDLER:     // trap code 6
     .weak   __STORE_MISALIGNED_HANDLER
     j       .
-
-
-// First-level trap handler
-__MAIN_TRAP_HANDLER:
-    // works for both direct and vectored mode (vectored is faster)
-    csrw    mscratch, x5        // save temp register
-    csrr    x5, mcause          // get trap cause
-    bge     x5, x0, __main_trap_handler_ex // branch if exception, else interrupt
-    sll     x5, x5, 2           // prep interrupt vector table offset
-    addi    x5, x5, %lo(__INTERRUPT_VECTOR_TABLE) // calc interrupt handler address
-    jr      x5                  // jump to interrupt handler
-__main_trap_handler_ex:
-    sll     x5, x5, 2
-    addi    x5, x5, %lo(__EXCEPTION_VECTOR_TABLE) // calc exception handler address
-    jr      x5                  // jump to exception handler
+    # lw      t0, 0(sp)           // restore registers
+    # lw      t1, 4(sp)
+    # addi    sp, sp, 8
+    # mret                        // return from trap
 
 
 // Dummy second-level exception handler
@@ -277,24 +290,22 @@ __GPIOC1_HANDLER:       // 25
     .weak   __GPIOB1_HANDLER
     .weak   __GPIOC0_HANDLER
     .weak   __GPIOC1_HANDLER
+// Dummy interrupt handler (vectored-mode only)
 __DEFAULT_INT_HANDLER:
     // disables interrupt source in mie CSR
-    addi    sp, sp, -8
-    sw      x5, 4(sp)
-    sw      x6, 0(sp)       // save temporary registers to stack
-    csrr    x5, mcause      // get interrupt cause
-    slli    x5, x5, 1
-    srli    x5, x5, 1       // clear trap code MSB (interrupt bit)
-    li      x6, 1
-    sll     x6, x6, x5      // create mask for interrupt cause
-    csrc    mie, x6         // disable interrupt cause
-    lw      x5, 4(sp)
-    lw      x6, 0(sp)       // restore temp registers
+    addi    sp, sp, -8      // save 2 temporary registers to stack
+    sw      t0, 0(sp)
+    sw      t1, 4(sp)
+    csrr    t0, mcause      // get interrupt cause
+    slli    t0, t0, 1
+    srli    t0, t0, 1       // clear trap code MSB (interrupt bit)
+    li      t1, 1
+    sll     t1, t1, t0      // create mask for interrupt cause
+    csrc    mie, t1         // disable interrupt cause
+    lw      t0, 0(sp)       // restore registers
+    lw      t0, 4(sp)
     addi    sp, sp, 8
     mret                    // exit trap handler
-
-
-
 
 
 .cfi_endproc

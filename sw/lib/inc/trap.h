@@ -163,4 +163,97 @@ inline uint32_t __attribute__((always_inline)) is_mcause_interrupt() {
 };
 
 
+
+
+// Context save and restore
+inline void __attribute__((always_inline)) __save_context() {
+    // do not save x0 and sp
+    __asm__ volatile (
+        "addi sp, sp, -30*4 \n"
+        "sw x1,   0*4(sp) \n"
+        "sw x3,   1*4(sp) \n"
+        "sw x4,   2*4(sp) \n"
+        "sw x5,   3*4(sp) \n"
+        "sw x6,   4*4(sp) \n"
+        "sw x7,   5*4(sp) \n"
+        "sw x8,   6*4(sp) \n"
+        "sw x9,   7*4(sp) \n"
+        "sw x10,  8*4(sp) \n"
+        "sw x11,  9*4(sp) \n"
+        "sw x12, 10*4(sp) \n"
+        "sw x13, 11*4(sp) \n"
+        "sw x14, 12*4(sp) \n"
+        "sw x15, 13*4(sp) \n"
+        "sw x16, 14*4(sp) \n"
+        "sw x17, 15*4(sp) \n"
+        "sw x18, 16*4(sp) \n"
+        "sw x19, 17*4(sp) \n"
+        "sw x20, 18*4(sp) \n"
+        "sw x21, 19*4(sp) \n"
+        "sw x22, 20*4(sp) \n"
+        "sw x23, 21*4(sp) \n"
+        "sw x24, 22*4(sp) \n"
+        "sw x25, 23*4(sp) \n"
+        "sw x26, 24*4(sp) \n"
+        "sw x27, 25*4(sp) \n"
+        "sw x28, 26*4(sp) \n"
+        "sw x29, 27*4(sp) \n"
+        "sw x30, 28*4(sp) \n"
+        "sw x31, 29*4(sp) \n"
+    );
+}
+
+inline void __attribute__((always_inline)) __restore_context() {
+    // do not restore x0 and sp
+    __asm__ volatile (
+        "lw x1,   0*4(sp) \n"
+        "lw x3,   1*4(sp) \n"
+        "lw x4,   2*4(sp) \n"
+        "lw x5,   3*4(sp) \n"
+        "lw x6,   4*4(sp) \n"
+        "lw x7,   5*4(sp) \n"
+        "lw x8,   6*4(sp) \n"
+        "lw x9,   7*4(sp) \n"
+        "lw x10,  8*4(sp) \n"
+        "lw x11,  9*4(sp) \n"
+        "lw x12, 10*4(sp) \n"
+        "lw x13, 11*4(sp) \n"
+        "lw x14, 12*4(sp) \n"
+        "lw x15, 13*4(sp) \n"
+        "lw x16, 14*4(sp) \n"
+        "lw x17, 15*4(sp) \n"
+        "lw x18, 16*4(sp) \n"
+        "lw x19, 17*4(sp) \n"
+        "lw x20, 18*4(sp) \n"
+        "lw x21, 19*4(sp) \n"
+        "lw x22, 20*4(sp) \n"
+        "lw x23, 21*4(sp) \n"
+        "lw x24, 22*4(sp) \n"
+        "lw x25, 23*4(sp) \n"
+        "lw x26, 24*4(sp) \n"
+        "lw x27, 25*4(sp) \n"
+        "lw x28, 26*4(sp) \n"
+        "lw x29, 27*4(sp) \n"
+        "lw x30, 28*4(sp) \n"
+        "lw x31, 29*4(sp) \n"
+        "addi sp, sp, 30*4 \n"
+    );
+}
+
+inline void __attribute__((always_inline)) mret_interrupt() {
+    __asm__ volatile (
+        "mret\n"
+    );
+}
+
+inline void __attribute__((always_inline)) mret_exception() {
+    __asm__ volatile (
+        "lw     t0, 0(sp)\n"
+        "lw     t1, 4(sp)\n"
+        "addi   sp, sp, 8\n"
+        "mret\n"
+    );
+}
+
+
 #endif // __TRAP_H

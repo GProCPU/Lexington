@@ -82,7 +82,8 @@ module Basys3 (
         .rst_n_o(soc_rst_n)
     );
 
-    assign gpioa = led;
+    // assign gpioa = led;
+    assign led = gpioa;
     assign gpiob = sw;
     assign gpioc[7:0] = JA;
     assign gpioc[11:8] = JB[3:0];
@@ -93,7 +94,6 @@ module Basys3 (
 
 
     soc #(
-        .CLK_FREQ(10_000_000),
         .UART0_BAUD(9600),
         .UART0_FIFO_DEPTH(8)
     ) SOC (
@@ -103,8 +103,8 @@ module Basys3 (
         .gpioa,
         .gpiob,
         .gpioc,
-        .uart0_rx(RxRx),
-        .uart0_tx(RxTx),
+        .uart0_rx(RsRx),
+        .uart0_tx(RsTx),
         .vga_r(vgaRed),
         .vga_g(vgaGreen),
         .vga_b(vgaBlue),

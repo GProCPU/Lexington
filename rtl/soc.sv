@@ -14,7 +14,6 @@ import lexington::*;
 
 
 module soc #(
-        parameter CLK_FREQ              = DEFAULT_CLK_FREQ,             // core clock in Hz
         parameter UART0_BAUD            = DEFAULT_UART_BAUD,            // UART BAUD rate
         parameter UART0_FIFO_DEPTH      = DEFAULT_UART_FIFO_DEPTH       // FIFO depth for both TX and RX (depth 0 is invalid)
     ) (
@@ -102,7 +101,6 @@ module soc #(
     // BEGIN: Core Instantiation
     ////////////////////////////////////////////////////////////
     core #(
-        .CLK_FREQ(CLK_FREQ),
         .ROM_ADDR_WIDTH(ROM_ADDR_WIDTH),
         .RAM_ADDR_WIDTH(RAM_ADDR_WIDTH),
         .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
