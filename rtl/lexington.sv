@@ -34,16 +34,18 @@ package lexington;
     localparam GPIOC_BASE_ADDR          = 32'hFFFF_FFC0;    // GPIOC
 
     // VGA parameters
-    localparam VGA_PIXEL_WIDTH          = 640;
-    localparam VGA_PIXEL_HEIGHT         = 480;
-    localparam VGA_PIXEL_DEPTH          = 8;
+    localparam VGA_H_LINE               = 640;
+    localparam VGA_V_LINE               = 480;
     localparam VGA_H_SYNC_PULSE         = 96;
     localparam VGA_H_BACK_PORCH         = 48;
     localparam VGA_H_FRONT_PORCH        = 16;
     localparam VGA_V_SYNC_PULSE         = 2;
     localparam VGA_V_BACK_PORCH         = 33;
     localparam VGA_V_FRONT_PORCH        = 10;
-    localparam VGA_ADDR_WIDTH           = $clog2(VGA_PIXEL_WIDTH * VGA_PIXEL_HEIGHT * ((VGA_PIXEL_DEPTH-1)/2 + 1)); // byte-addressable VGA address
+    localparam VGA_PIXEL_WIDTH          = 320;
+    localparam VGA_PIXEL_HEIGHT         = 240;
+    localparam VGA_PIXEL_FORMAT         = "rgb332";
+    localparam VGA_ADDR_WIDTH           = $clog2(VGA_H_LINE * VGA_V_LINE * 4); // byte-addressable VGA address
 
     // Other Tunable Parameters
     localparam MTIME_PERIOD             = 1_000;            // mtime 'tick' period in ns

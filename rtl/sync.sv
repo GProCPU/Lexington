@@ -21,7 +21,7 @@ module sync #(
     end
     always_ff @(posedge dest_clk) begin
         if (!rst_n) begin
-            flops = {STAGES{RESET_VALUE}};
+            flops <= {STAGES{RESET_VALUE}};
         end
         else begin
             flops <= {flops[STAGES-2:0], din};

@@ -2,14 +2,14 @@
 
 
 module vga_timing #(
-        parameter PIXEL_WIDTH      = 640,
-        parameter PIXEL_HEIGHT     = 480,
-        parameter H_SYNC_PULSE     = 96,
-        parameter H_BACK_PORCH     = 48,
-        parameter H_FRONT_PORCH    = 16,
-        parameter V_SYNC_PULSE     = 2,
-        parameter V_BACK_PORCH     = 33,
-        parameter V_FRONT_PORCH    = 10
+        parameter H_LINE            = 640,
+        parameter V_LINE            = 480,
+        parameter H_SYNC_PULSE      = 96,
+        parameter H_BACK_PORCH      = 48,
+        parameter H_FRONT_PORCH     = 16,
+        parameter V_SYNC_PULSE      = 2,
+        parameter V_BACK_PORCH      = 33,
+        parameter V_FRONT_PORCH     = 10
     ) (
         input  logic pxclk,
         input  logic rst_n,
@@ -17,8 +17,8 @@ module vga_timing #(
         output logic hsync,
         output logic vsync,
 
-        output logic [$clog2(PIXEL_WIDTH)-1:0] xaddr,
-        output logic [$clog2(PIXEL_HEIGHT)-1:0] yaddr,
+        output logic [$clog2(H_LINE)-1:0] xaddr,
+        output logic [$clog2(V_LINE)-1:0] yaddr,
         output logic addr_valid
     );
 
@@ -64,7 +64,7 @@ module vga_timing #(
                 end
 
                 VISIBLE: begin
-                    if (xaddr < PIXEL_WIDTH-1) begin
+                    if (xaddr < H_LINE-1) begin
                         xaddr   <= xaddr + 1;
                     end
                     else begin
@@ -129,7 +129,7 @@ module vga_timing #(
                 end
 
                 VISIBLE: begin
-                    if (yaddr < PIXEL_HEIGHT-1) begin
+                    if (yaddr < V_LINE-1) begin
                         yaddr   <= yaddr + 1;
                     end
                     else begin

@@ -24,7 +24,7 @@
             "compilerPath": "/opt/riscv/bin/riscv32-unknown-elf-gcc",
             "cStandard": "c11",
             "cppStandard": "c++11",
-            "intelliSenseMode": "linux-clang-x64",
+            "intelliSenseMode": "linux-gcc-arm",
             "mergeConfigurations": false,
             "compilerArgs": [
                 "-march=rv32i_zicsr",

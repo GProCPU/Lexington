@@ -8,9 +8,7 @@ module vga_frame_buff #(
         parameter PIXEL_DEPTH       = 8,
         parameter AXI_DATA_WIDTH    = 32,
         localparam NUM_PIXELS       = PIXEL_WIDTH * PIXEL_HEIGHT,
-        localparam BYTES_PER_PIXEL  = (PIXEL_DEPTH-1)/8 + 1,
-        localparam PIXEL_ADDR_WIDTH = $clog2(NUM_PIXELS),                   // pixel-addressable
-        localparam AXI_ADDR_WIDTH   = $clog2(NUM_PIXELS * BYTES_PER_PIXEL)  // byte-addressable
+        localparam PIXEL_ADDR_WIDTH = $clog2(NUM_PIXELS)                    // pixel-addressable
     ) (
         input  logic pxclk,
         input  logic rst_n,
@@ -21,13 +19,14 @@ module vga_frame_buff #(
         axi4_lite.subordinate axi
     );
 
-    localparam WORD_BYTE_INDEX_BITS = $clog2(AXI_DATA_WIDTH/8);
-    localparam WORD_PIXEL_INDEX_BITS = $clog2((AXI_DATA_WIDTH/8) / BYTES_PER_PIXEL);
+    localparam PADDED_PIXEL_DEPTH = (PIXEL_DEPTH <= 8) ? 8 :
+                                    (PIXEL_DEPTH <= 16) : 16 :
+                                    32;
+    localparam AXI_ADDR_WIDTH = $clog2(NUM_PIXELS * (PADDED_PIXEL_DEPTH/8));
 
     // VGA read signals
     logic [AXI_ADDR_WIDTH-1:0] _raw_px_addr;
     logic [AXI_DATA_WIDTH-1:0] _raw_px_data;
-    logic [WORD_PIXEL_INDEX_BITS-1:0] _word_px_index;
 
     // AXI read internal buffers
     logic [PIXEL_ADDR_WIDTH-1:0] _araddr;
@@ -44,7 +43,7 @@ module vga_frame_buff #(
     logic _ram_rd_ack;
     logic _ram_wr_ack;
     logic _ram_en;
-    logic [(AXI_ADDR_WIDTH/8)-1:0] _ram_wen;
+    logic [(AXI_DATA_WIDTH/8)-1:0] _ram_wen;
     logic [PIXEL_ADDR_WIDTH-1:0] _ram_addr;
 
 
@@ -52,15 +51,15 @@ module vga_frame_buff #(
     ////////////////////////////////////////////////////////////
     // BEGIN: Frame Buffer RAM Instantiation
     ////////////////////////////////////////////////////////////
-    dual_port_ram #(
+    bytewrite_dual_port_ram #(
         .NUM_COL(AXI_DATA_WIDTH/8), // write-enable lanes
         .COL_WIDTH(8),              // bits-per write-enable line
         .ADDR_WIDTH(AXI_ADDR_WIDTH)
         // DATA_WIDTH = NUM_COL * COL_WIDTH
-    ) (
+    ) FRAME_BUFF (
         .clk_a(pxclk),
         .en_a(1'b1),
-        .wen_a(0),
+        .wen_a({(AXI_DATA_WIDTH/8){1'b0}}),
         .addr_a(_raw_px_addr),
         .din_a(0),
         .dout_a(_raw_px_data),
@@ -82,8 +81,17 @@ module vga_frame_buff #(
     // BEGIN: VGA read
     ////////////////////////////////////////////////////////////
     assign _raw_px_addr = px_addr << (AXI_ADDR_WIDTH-PIXEL_ADDR_WIDTH);
-    assign _word_px_index = _raw_px_addr[WORD_PIXEL_INDEX_BITS-1:0];
-    assign px_data = _raw_px_data >> ((BYTES_PER_PIXEL*8) * (_word_px_index));
+    generate
+        if (8 == PADDED_PIXEL_DEPTH) begin
+            assign px_data = _raw_px_data >> px_addr[1:0];
+        end
+        else if (16 == PADDED_PIXEL_DEPTH) begin
+            assign px_data = _raw_px_data >> px_addr[0];
+        end
+        else begin
+            assign px_data = _raw_px_data;
+        end
+    endgenerate
     ////////////////////////////////////////////////////////////
     // END: VGA read
     ////////////////////////////////////////////////////////////
@@ -108,14 +116,14 @@ module vga_frame_buff #(
                 _ram_rd_ack = 0;
                 _ram_wr_ack = 1;
                 _ram_en     = 1;
-                _ram_wen    = 0;
+                _ram_wen    = _wstrb;
                 _ram_addr   = _araddr;
             end
             else if (_ram_rd_req) begin
                 _ram_rd_ack = 1;
                 _ram_wr_ack = 0;
                 _ram_en     = 1;
-                _ram_wen    = _wstrb;
+                _ram_wen    = 0;
                 _ram_addr   = _awaddr;
             end
             else begin
@@ -153,7 +161,7 @@ module vga_frame_buff #(
 
                 AR_READY: begin // arready asserted, waiting for arvalid
                     if (axi.arvalid) begin
-                        if (|axi.araddr[WORD_BYTE_INDEX_BITS-1:0]) begin
+                        if (|axi.araddr[1:0]) begin // must be word-aligned
                             rd_state    <= R_VALID;
                             axi.arready <= 0;
                             axi.rvalid  <= 1;
@@ -249,7 +257,7 @@ module vga_frame_buff #(
 
                 W_READY: begin // wready asserted, waiting for wvalid
                     if (axi.wvalid) begin
-                        if (|_awaddr[WORD_BYTE_INDEX_BITS-1:0]) begin
+                        if (|_awaddr[1:0]) begin // must be word-aligned
                             wr_state    <= B_VALID;
                             axi.wready  <= 0;
                             axi.bvalid  <= 1;

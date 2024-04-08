@@ -288,16 +288,18 @@ module soc #(
     assign uart0_rx_int = 0;
     assign uart0_tx_int = 0;
     vga #(
-        .PIXEL_WIDTH(VGA_PIXEL_WIDTH),
-        .PIXEL_HEIGHT(VGA_PIXEL_HEIGHT),
-        .PIXEL_DEPTH(VGA_PIXEL_DEPTH),
+        .H_LINE(VGA_H_LINE),
         .H_SYNC_PULSE(VGA_H_SYNC_PULSE),
         .H_BACK_PORCH(VGA_H_BACK_PORCH),
         .H_FRONT_PORCH(VGA_H_FRONT_PORCH),
+        .V_LINE(VGA_V_LINE),
         .V_SYNC_PULSE(VGA_V_SYNC_PULSE),
         .V_BACK_PORCH(VGA_V_BACK_PORCH),
         .V_FRONT_PORCH(VGA_V_FRONT_PORCH),
-        .AXI_DATA_WIDTH(rv32::XLEN)
+        .AXI_DATA_WIDTH(rv32::XLEN),
+        .PIXEL_WIDTH(VGA_PIXEL_WIDTH),
+        .PIXEL_HEIGHT(VGA_PIXEL_HEIGHT),
+        .PIXEL_FORMAT(VGA_PIXEL_FORMAT)
     ) VGA0 (
         .pxclk,
         .rst_n,

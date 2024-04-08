@@ -7,7 +7,7 @@ module soc_TB;
 
     localparam CLK_PERIOD = 100;
     localparam CYCLES_PER_MILLI = 1_000_000 / CLK_PERIOD;
-    localparam SIM_MILLIS = 1;
+    localparam SIM_MILLIS = 40;
 
     localparam MAX_CYCLES = SIM_MILLIS * CYCLES_PER_MILLI;
     integer clk_count = 0;
@@ -19,13 +19,19 @@ module soc_TB;
     localparam UART0_FIFO_DEPTH     = 8;
 
     // DUT Ports
-    logic clk;
+    logic clk, pxclk;
     logic rst, rst_n;
     wire  [15:0] gpioa, gpiob, gpioc;
     logic uart0_rx;
     logic uart0_tx;
+    logic [3:0] vga_r, vga_g, vga_b;
+    logic vga_hs;
+    logic vga_vs;
+
+    logic [11:0] rgb;
 
     assign rst_n = ~rst;
+    assign rgb = {vga_r, vga_g, vga_b};
 
     // Instantiate DUT
     soc #(
@@ -33,18 +39,29 @@ module soc_TB;
         .UART0_FIFO_DEPTH(UART0_FIFO_DEPTH)
     ) DUT (
         .clk,
+        .pxclk,
         .rst_n,
         .gpioa,
         .gpiob,
         .gpioc,
         .uart0_rx,
-        .uart0_tx
+        .uart0_tx,
+        .vga_r,
+        .vga_g,
+        .vga_b,
+        .vga_hs,
+        .vga_vs
     );
 
 
-    // 10 MHz clock
-    initial clk = 0;
+    // Core clock
+    initial clk = 1;
     initial forever #(CLK_PERIOD/2) clk = ~clk;
+
+    // Pixel clock (25 MHz)
+    initial pxclk = 1;
+    initial forever #20 pxclk = pxclk;
+
 
     // Initialize
     initial begin

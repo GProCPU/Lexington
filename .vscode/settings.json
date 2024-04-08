@@ -23,6 +23,7 @@
         "BREADY",
         "BRESP",
         "BVALID",
+        "bytewrite",
         "CLKFB",
         "CLKFBIN",
         "CLKFBOUT",

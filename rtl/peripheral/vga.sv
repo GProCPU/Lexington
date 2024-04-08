@@ -6,16 +6,18 @@
 
 // Not fully parameterized
 module vga #(
-        parameter PIXEL_WIDTH       = 640,
-        parameter PIXEL_HEIGHT      = 480,
-        parameter PIXEL_DEPTH       = 8,
+        parameter H_LINE            = 640,
         parameter H_SYNC_PULSE      = 96,
         parameter H_BACK_PORCH      = 48,
         parameter H_FRONT_PORCH     = 16,
+        parameter V_LINE            = 480,
         parameter V_SYNC_PULSE      = 2,
         parameter V_BACK_PORCH      = 33,
         parameter V_FRONT_PORCH     = 10,
-        parameter AXI_DATA_WIDTH    = 32
+        parameter AXI_DATA_WIDTH    = 32,
+        parameter PIXEL_WIDTH       = H_LINE,
+        parameter PIXEL_HEIGHT      = V_LINE,
+        parameter PIXEL_FORMAT      = "rgb332"
     ) (
         input  logic pxclk,
         input  logic rst_n,
@@ -29,14 +31,28 @@ module vga #(
         axi4_lite.subordinate axi
     );
 
+    // Pixel formats
+    localparam PIXEL_DEPTH =    ("rgb332" == PIXEL_FORMAT) ? 8 :
+                                ("rgb12"  == PIXEL_FORMAT) ? 12 :
+                                0;
+    generate if (0 == PIXEL_DEPTH) begin
+        $error("Invalid pixel format in module VGA. Expected 'rgb332' or 'rgb12', not '%s'", PIXEL_FORMAT);
+    end endgenerate
+
+    localparam H_SCALE = H_LINE / PIXEL_WIDTH;
+    localparam V_SCALE = V_LINE / PIXEL_HEIGHT;
     localparam AXI_ADDR_WIDTH = $clog2(PIXEL_WIDTH * PIXEL_HEIGHT * ((PIXEL_DEPTH-1)/2 + 1));
 
     logic [$clog2(PIXEL_WIDTH)-1:0] xaddr;
     logic [$clog2(PIXEL_HEIGHT)-1:0] yaddr;
     logic addr_valid;
 
-    logic [AXI_ADDR_WIDTH/2-1:0] px_addr;
+    logic [$clog2(PIXEL_WIDTH*PIXEL_HEIGHT)-1:0] px_addr;
     logic [PIXEL_DEPTH-1:0] px_data;
+
+    logic [$clog2(PIXEL_WIDTH*PIXEL_HEIGHT)-1:0] row_addr;
+    logic [$clog2(H_SCALE)-1:0] h_count;
+    logic [$clog2(V_SCALE)-1:0] v_count;
 
     logic [PIXEL_DEPTH-1:0] rgb;
     logic hsync_buff;
@@ -45,17 +61,27 @@ module vga #(
     enum {V_BLANK, H_BLANK, VISIBLE} state;
 
 
-    // Not parameterized to PIXEL_DEPTH
-    // RGB332
-    assign r = {rgb[7:5], rgb[5]};
-    assign g = {rgb[4:2], rgb[2]};
-    assign b = {rgb[1:0], rgb[1:0]};
     assign rgb = (state == VISIBLE) ? px_data : 0;
+    generate
+        if ("rgb332" == PIXEL_FORMAT) begin
+            assign r = {rgb[7:5], rgb[5]};
+            assign g = {rgb[4:2], rgb[2]};
+            assign b = {rgb[1:0], rgb[1:0]};
+        end
+        else if ("rgb12" == PIXEL_FORMAT) begin
+            assign r = rgb[11:8];
+            assign g = rgb[7:4];
+            assign b = rgb[3:0];
+        end
+    endgenerate
 
     always_ff @(posedge pxclk) begin
         if (!rst_n) begin
             state   <= V_BLANK;
             px_addr <= 0;
+            row_addr<= 0;
+            h_count <= 0;
+            v_count <= 0;
             hsync   <= 0;
             vsync   <= 0;
         end
@@ -66,6 +92,9 @@ module vga #(
 
                 V_BLANK: begin
                     px_addr <= 0;
+                    row_addr<= 0;
+                    h_count <= 0;
+                    v_count <= 0;
                     if (addr_valid) begin
                         state <= VISIBLE;
                     end
@@ -81,9 +110,24 @@ module vga #(
                 end
 
                 VISIBLE: begin
-                    px_addr <= px_addr + 1;
-                    if (!addr_valid) begin
-                        state <= H_BLANK;
+                    if (addr_valid) begin
+                        if (h_count >= H_SCALE-1) begin
+                            px_addr <= px_addr + 1;
+                            h_count <= 0;
+                        end
+                        else begin
+                            h_count <= h_count + 1;
+                        end
+                    end
+                    else begin
+                        state   <= H_BLANK;
+                        if (v_count >= V_SCALE-1) begin
+                            px_addr <= px_addr + 1;
+                            row_addr<= px_addr + 1;
+                        end
+                        else begin
+                            px_addr <= row_addr;
+                        end
                     end
                 end
 
@@ -93,8 +137,8 @@ module vga #(
 
 
     vga_timing #(
-        .PIXEL_WIDTH(PIXEL_WIDTH),
-        .PIXEL_HEIGHT(PIXEL_HEIGHT),
+        .H_LINE(H_LINE),
+        .V_LINE(V_LINE),
         .H_SYNC_PULSE(H_SYNC_PULSE),
         .H_BACK_PORCH(H_BACK_PORCH),
         .H_FRONT_PORCH(H_FRONT_PORCH),
