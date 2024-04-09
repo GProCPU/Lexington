@@ -11,7 +11,7 @@ import lexington::*;
 
 module core_TB;
 
-    localparam MAX_CYCLES = 2048;
+    localparam MAX_CYCLES = 2_500;
     integer clk_count = 0;
     integer fail = 0;
     integer fid;
@@ -130,7 +130,7 @@ module core_TB;
     // Instantiate RAM
     ram #(
         .ADDR_WIDTH(RAM_ADDR_WIDTH),
-        .DUMP_MEM(1)
+        .DUMP_MEM(0)
     ) RAM0 (
         .clk,
         .rd_en(ram_rd_en),

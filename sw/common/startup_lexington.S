@@ -196,6 +196,11 @@ __EXCEPTION_VECTOR_TABLE:
 
 // First-level trap handler (vectored mode only)
 __FIRST_LEVEL_TRAP_HANDLER:
+    // align stack pointer
+    csrw    mscratch, sp        // save stack pointer
+    ori     sp, sp, 0x3         // purposefully misalign upward 0-3 bytes
+    addi    sp, sp, -3          // align downward
+    // stack pointer now aligned
     addi    sp, sp, -8          // save registers (must be restored by ex handler)
     sw      t0, 0(sp)
     sw      t1, 4(sp)
@@ -205,24 +210,6 @@ __FIRST_LEVEL_TRAP_HANDLER:
     la      t1, __EXCEPTION_VECTOR_TABLE
     add     t0, t0, t1          // calculate jump address
     jr      t0                  // jump to exception handler
-
-
-// Misaligned data access handling
-__LOAD_MISALIGNED_HANDLER:      // trap code 4
-    .weak   __LOAD_MISALIGNED_HANDLER
-    j       .
-    # lw      t0, 0(sp)           // restore registers
-    # lw      t1, 4(sp)
-    # addi    sp, sp, 8
-    # mret                        // return from trap
-
-__STORE_MISALIGNED_HANDLER:     // trap code 6
-    .weak   __STORE_MISALIGNED_HANDLER
-    j       .
-    # lw      t0, 0(sp)           // restore registers
-    # lw      t1, 4(sp)
-    # addi    sp, sp, 8
-    # mret                        // return from trap
 
 
 // Dummy second-level exception handler
@@ -306,6 +293,250 @@ __DEFAULT_INT_HANDLER:
     lw      t0, 4(sp)
     addi    sp, sp, 8
     mret                    // exit trap handler
+
+
+// Misaligned data access handling
+__LOAD_MISALIGNED_HANDLER:      // trap code 4
+    .weak   __LOAD_MISALIGNED_HANDLER
+    addi    sp, sp, -4
+    sw      t2, 0(sp)
+    csrr    t0, mtval           // get faulting address
+    csrr    t1, mepc            // get faulting instruction address
+    lw      t1, 0(t1)           // load faulting instruction
+    // determine load type
+    srli    t1, t1, 12          // shift funct3 (load type) to LSB
+    andi    t1, t1, 7           // isolate funct3 bits
+    // branch to load type
+    li      t2, 0x2             // LW code
+    beq     t1, t2, __LW_ALIGN
+    li      t2, 0x1             // LH code
+    beq     t1, t2, __LH_ALIGN
+    li      t2, 0x5             // LHU code
+    beq     t1, t2, __LHU_ALIGN
+    // misaligned LB and LBU should never happen
+    j       __UNKNOWN_EX_HANDLER
+__LW_ALIGN:
+    lbu     t1, 0(t0)           // load [7:0]
+    lbu     t2, 1(t0)           // load [15:8]
+    slli    t2, t2, 8           // shift
+    or      t1, t1, t2          // combine [15:0]
+    lbu     t2, 2(t0)           // load [23:16]
+    slli    t2, t2, 16          // shift
+    or      t1, t1, t2          // combine [24:0]
+    lbu     t2, 3(t0)           // load [31:24]
+    slli    t2, t2, 24          // shift
+    or      t0, t1, t2          // combine [31:0]
+    j       __LOAD_MISALIGNED_HANDLER_DEST
+__LH_ALIGN:
+    lbu     t1, 0(t0)           // load lower byte
+    lb      t0, 1(t0)           // load upper byte with sign-extend
+    sll     t0, t0, 8           // shift upper byte
+    or      t0, t0, t1          // combine bytes
+    j       __LOAD_MISALIGNED_HANDLER_DEST
+__LHU_ALIGN:
+    lbu     t1, 0(t0)           // load lower byte
+    lbu     t0, 1(t0)           // load upper byte
+    sll     t0, t0, 8           // shift upper byte
+    or      t0, t0, t1          // combine bytes
+    j       __LOAD_MISALIGNED_HANDLER_DEST
+__LOAD_MISALIGNED_HANDLER_DEST:
+    csrr    t1, mepc            // get faulting instruction address
+    lw      t1, 0(t1)           // load faulting instruction
+    srli    t1, t1, 7           // shift rd (dest) to LSB
+    andi    t1, t1, 0x1F        // isolate rd bits
+    la      t2, __LOAD_MISALIGNED_HANDLER_DEST_VECTOR
+    slli    t1, t1, 3           // prep rd to index into dest vector
+    add     t1, t1, t2          // dest vector index + offset
+    jr      t1                  // jump to dest vector entry
+__LOAD_MISALIGNED_HANDLER_DEST_VECTOR:
+    j       __LOAD_MISALIGNED_HANDLER_EXIT  // x0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x1, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x2, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x3, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x4, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    sw      t0, 4(sp)   // x5 (t0)
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    sw      t0, 8(sp)   // x6 (t1)
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    sw      t0, 0(sp)   // x7 (t2)
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x8, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x9, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x10, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x11, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x12, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x13, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x14, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x15, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x16, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x17, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x18, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x19, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x20, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x21, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x22, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x23, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x24, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x25, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x26, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x27, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x28, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x29, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x30, t0
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      x31, t0
+__LOAD_MISALIGNED_HANDLER_EXIT:
+    csrr    t0, mepc
+    addi    t0, t0, 4           // increment mepc to next instruction
+    csrw    mepc, t0
+    lw      t2, 0(sp)           // restore registers
+    lw      t0, 4(sp)
+    lw      t1, 8(sp)
+    csrr    sp, mscratch        // restore stack pointer from mscratch
+    mret                        // return from trap
+
+
+__STORE_MISALIGNED_HANDLER:     // trap code 6
+    .weak   __STORE_MISALIGNED_HANDLER
+    addi    sp, sp, -4
+    sw      t2, 0(sp)
+    // get store data
+    csrr    t1, mepc            // get faulting instruction address
+    lw      t1, 0(t1)           // load faulting instruction
+    srli    t1, t1, 20          // shift rs2 (src) to LSB
+    andi    t1, t1, 0x1F        // isolate rs2 bits
+    la      t2, __STORE_MISALIGNED_HANDLER_SRC_VECTOR
+    slli    t1, t1, 3           // prep rs2 to index into src vector
+    add     t1, t1, t2          // src vector index + offset
+    jr      t1                  // jump to src vector entry
+__STORE_MISALIGNED_HANDLER_SRC_VECTOR:
+    mv      t0, x0
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x1
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x2
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x3
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x4
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    lw      t0, 4(sp)   // x5 (t0)
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    lw      t0, 8(sp)   // x6 (t1)
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    lw      t0, 0(sp)   // x7 (t2)
+    j       __LOAD_MISALIGNED_HANDLER_EXIT
+    mv      t0, x8
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x9
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x10
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x11
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x12
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x13
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x14
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x15
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x16
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x17
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x18
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x19
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x20
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x21
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x22
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x23
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x24
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x25
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x26
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x27
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x28
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x29
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      t0, x30
+    j       __STORE_MISALIGNED_HANDLER_GOT_SRC
+    mv      x31, t0
+__STORE_MISALIGNED_HANDLER_GOT_SRC:
+    csrr    t1, mepc            // get faulting instruction address
+    lw      t1, 0(t1)           // load faulting instruction
+    // determine store type
+    srli    t1, t1, 12          // shift funct3 (store type) to LSB
+    andi    t1, t1, 7           // isolate funct3 bits
+    // branch to store type
+    li      t2, 0x2             // SW code
+    beq     t1, t2, __SW_ALIGN
+    li      t2, 0x1             // SH code
+    beq     t1, t2, __SH_ALIGN
+    // misaligned SB should never happen
+    j       __UNKNOWN_EX_HANDLER
+__SW_ALIGN:
+    csrr    t1, mtval           // get faulting address
+    sb      t0, 0(t1)           // store [7:0]
+    srli    t0, t0, 8           // shift
+    sb      t0, 1(t1)           // store [15:8]
+    srli    t0, t0, 8           // shift
+    sb      t0, 2(t1)           // store [23:16]
+    srli    t0, t0, 8           // shift
+    sb      t0, 3(t1)           // store [31:24]
+    j       __STORE_MISALIGNED_HANDLER_EXIT
+__SH_ALIGN:
+    csrr    t1, mtval           // get faulting address
+    sb      t0, 0(t1)           // store lower byte
+    srli    t0, t0, 8           // shift upper byte
+    sb      t0, 1(t1)           // store upper byte
+__STORE_MISALIGNED_HANDLER_EXIT:
+    csrr    t0, mepc
+    addi    t0, t0, 4           // increment mepc to next instruction
+    csrw    mepc, t0
+    lw      t2, 0(sp)           // restore registers
+    lw      t0, 4(sp)
+    lw      t1, 8(sp)
+    csrr    sp, mscratch        // restore stack pointer from mscratch
+    mret                        // return from trap
 
 
 .cfi_endproc

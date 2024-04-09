@@ -53,7 +53,7 @@ module lsu (
                 dest_data  = { {24{dbus_rd_data[7]}}, dbus_rd_data[7:0] };
                 dbus_rd_en = 1;
                 dbus_wr_en = 0;
-                dbus_wr_strobe = 4'h0;
+                dbus_wr_strobe = 4'h1;
                 csr_wr_en  = 0;
             end
             LSU_LH: begin
@@ -61,7 +61,7 @@ module lsu (
                 dest_data  = { {16{dbus_rd_data_endian16[15]}}, dbus_rd_data_endian16 };
                 dbus_rd_en = 1;
                 dbus_wr_en = 0;
-                dbus_wr_strobe = 4'h0;
+                dbus_wr_strobe = 4'h3;
                 csr_wr_en  = 0;
             end
             LSU_LW: begin
@@ -69,7 +69,7 @@ module lsu (
                 dest_data  = dbus_rd_data_endian;
                 dbus_rd_en = 1;
                 dbus_wr_en = 0;
-                dbus_wr_strobe = 4'h0;
+                dbus_wr_strobe = 4'hF;
                 csr_wr_en  = 0;
             end
             LSU_LBU: begin
@@ -77,7 +77,7 @@ module lsu (
                 dest_data  = { {24{1'b0}}, dbus_rd_data[7:0] };
                 dbus_rd_en = 1;
                 dbus_wr_en = 0;
-                dbus_wr_strobe = 4'h0;
+                dbus_wr_strobe = 4'h1;
                 csr_wr_en  = 0;
             end
             LSU_LHU: begin
@@ -85,7 +85,7 @@ module lsu (
                 dest_data  = { {16{1'b0}}, dbus_rd_data_endian16 };
                 dbus_rd_en = 1;
                 dbus_wr_en = 0;
-                dbus_wr_strobe = 4'h0;
+                dbus_wr_strobe = 4'h3;
                 csr_wr_en  = 0;
             end
             LSU_SB: begin

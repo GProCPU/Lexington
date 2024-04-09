@@ -118,7 +118,7 @@ $(APP_BIN): $(APP_ELF)
 
 $(APP_HEX): $(APP_BIN)
 	@echo "Generating ROM hex"
-	@python3 $(MAKE_HEX) $< 1024 > $@
+	@python3 $(MAKE_HEX) $< 2048 > $@
 
 
 $(DUMP): build

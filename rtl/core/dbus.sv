@@ -28,7 +28,7 @@ module dbus #(
         input  rv32::word mtime_rd_data,                            // read data from mtime module
         input  rv32::word axi_rd_data,                              // read data from AXI interface
         input  logic axi_access_fault,                              // flag indicating AXI transaction access fault
-        input  logic axi_busy,                                      // flag indicating AXI transaction requires additonal cycles
+        input  logic axi_busy,                                      // flag indicating AXI transaction requires additional cycles
 
         output rv32::word rd_data,                                  // read data to LSU
         output logic rom_rd_en,                                     // read enable to ROM
@@ -64,6 +64,13 @@ module dbus #(
     logic [WORD_ADDR_WIDTH-1:0] word_addr;
     assign word_addr = addr >> rv32::ADDR_BITS_IN_WORD;
 
+    // Alignment related signals
+    rv32::word _raw_rd_data;
+    rv32::word word_aligned_address;
+    logic [rv32::ADDR_BITS_IN_WORD-1:0] byte_index;
+    assign word_aligned_address = word_addr << rv32::ADDR_BITS_IN_WORD;
+    assign byte_index = addr[rv32::ADDR_BITS_IN_WORD-1:0];
+
     // Select address bits
     assign rom_addr     = word_addr[ROM_ADDR_WIDTH-1:0];        // word-addressable
     assign ram_addr     = word_addr[RAM_ADDR_WIDTH-1:0];        // word-addressable
@@ -78,15 +85,32 @@ module dbus #(
     assign is_axi_addr      = (AXI_BASE_ADDR == mask_upper_bits(addr, AXI_ADDR_WIDTH));                                 // byte-addressable
 
 
-    // Set data_misaligned, load_store_n, and dbus_wait
-    assign data_misaligned  = (rd_en | wr_en) & (|(addr[rv32::ADDR_BITS_IN_WORD-1:0]));
+    // Set load_store_n, and dbus_wait
     assign load_store_n     = rd_en;
     assign dbus_wait        = ((rd_en | wr_en) && is_axi_addr) ? axi_busy : 0;
     assign dbus_err         = data_misaligned | data_access_fault;
 
-    // Pass through wr_data and wr_strobe
-    assign wr_data_o = wr_data_i;
-    assign wr_strobe_o = wr_strobe_i;
+    // Data alignment (raise misaligned exception if crosses word boundary)
+    // !! only works for rv32
+    always_comb begin
+        if (rd_en | wr_en) begin
+            rd_data     = _raw_rd_data >> (byte_index*8);
+            wr_data_o   = wr_data_i << (byte_index*8);
+            wr_strobe_o = wr_strobe_i << byte_index;
+            case (wr_strobe_i)
+                4'b1111: data_misaligned = (byte_index != 2'b00);
+                4'b0011: data_misaligned = (byte_index == 2'b11);
+                4'b0001: data_misaligned = 0;
+                default: data_misaligned = 'x; // should never happen
+            endcase
+        end
+        else begin
+            data_misaligned = 0;
+            rd_data     = 'x;
+            wr_data_o   = 'x;
+            wr_strobe_o = 'x;
+        end
+    end
 
     // Read/Write enable and read data routing
     always_comb begin
@@ -100,37 +124,37 @@ module dbus #(
         mtime_wr_en = 0;
         axi_rd_en = 0;
         axi_wr_en = 0;
-        rd_data   = 0;
+        _raw_rd_data = 0;
         if (!data_misaligned) begin
             if (is_rom_addr) begin
                 if (wr_en) begin // write permission prohibited
                     data_access_fault = 1;
-                    rd_data = 0;
+                    _raw_rd_data = 'x;
                 end
                 else begin
                     rom_rd_en = rd_en;
-                    rd_data   = rom_rd_data;
+                    _raw_rd_data = rom_rd_data;
                 end
             end
             else if (is_ram_addr) begin
                 ram_rd_en = rd_en;
                 ram_wr_en = wr_en;
-                rd_data = ram_rd_data;
+                _raw_rd_data = ram_rd_data;
             end
             else if (is_mtime_addr) begin
                 mtime_rd_en = rd_en;
                 mtime_wr_en = wr_en;
-                rd_data = mtime_rd_data;
+                _raw_rd_data = mtime_rd_data;
             end
             else if (is_axi_addr) begin
                 data_access_fault = axi_access_fault;
                 axi_rd_en = rd_en;
                 axi_wr_en = wr_en;
-                rd_data = axi_rd_data;
+                _raw_rd_data = axi_rd_data;
             end
             else begin
                 data_access_fault = rd_en | wr_en;
-                rd_data = 0;
+                _raw_rd_data = 'x;
             end
         end // if (!data_misaligned)
     end

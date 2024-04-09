@@ -13,7 +13,7 @@
 //  - x11: second function argument
 
 
-// Instruction test funcion
+// Instruction test function
 inst_test:
     csrw    mie, 0          // disable all interrupt sources
     addi    sp, sp, -12
@@ -559,7 +559,7 @@ inst_test:
     // check mepc
     li      x11, -1
     sw      x11, 0(sp)
-    lw      x12, 2(sp)          // load address misaligned exception
+    lw      x12, 3(sp)          // load address misaligned exception
     auipc   x11, 0
     csrr    x10, mepc
     call    check
@@ -568,7 +568,7 @@ inst_test:
     mv      x10, x12
     call    check
     // check mtval
-    addi    x11, sp, 2
+    addi    x11, sp, 3
     csrr    x10, mtval
     call    check
     // check mcause
@@ -598,7 +598,7 @@ inst_test:
     // check mepc
     sw      zero, 0(sp)
     li      x11, -1
-    sw      x11, 2(sp)          // store address misaligned exception
+    sw      x11, 3(sp)          // store address misaligned exception
     auipc   x11, 0
     csrr    x10, mepc
     call    check
@@ -607,7 +607,7 @@ inst_test:
     lw      x10, 0(sp)
     call    check
     // check mtval
-    addi    x11, sp, 2
+    addi    x11, sp, 3
     csrr    x10, mtval
     // check mcause
     li      x11, 6
@@ -695,6 +695,137 @@ inst_test:
 
 
     // FENCE, MRET, and WFI are not explicitly tested
+
+
+    // Memory misaligned handler tests
+    __test_misaligned:
+    // initialize misaligned memory test
+    lw      x10, 0(sp)          // re-load main vector table
+    csrw    mtvec, x10
+    // initialize memory
+    addi    sp, sp, -8          // allocate 2 words on the stack
+    li      x10, 0x76543210
+    li      x11, 0xFEDCBA98
+    sw      x10, 0(sp)
+    sw      x11, 4(sp)
+    __test_lw_misaligned_1:
+    lw      x10, 1(sp)
+    li      x11, 0x98765432
+    call    check
+    __test_lw_misaligned_2:
+    lw      x10, 2(sp)
+    li      x11, 0xBA987654
+    call    check
+    __test_lw_misaligned_3:
+    lw      x10, 3(sp)
+    li      x11, 0xDCBA9876
+    call    check
+    __test_lh_misaligned_1:
+    lh      x10, 5(sp)
+    li      x11, 0xFFFFDCBA
+    call    check
+    __test_lh_misaligned_2:
+    lh      x10, 2(sp)
+    li      x11, 0x00007654
+    call    check
+    __test_lh_misaligned_3:
+    lh      x10, 3(sp)
+    li      x11, 0xFFFF9876
+    call    check
+    __test_lhu_misaligned_3:
+    lhu     x10, 3(sp)
+    li      x11, 0x00009876
+    call    check
+    __test_lb_misaligned_1:
+    lb      x10, 5(sp)
+    li      x11, 0xFFFFFFBA
+    call    check
+    __test_lb_misaligned_2:
+    lb      x10, 2(sp)
+    li      x11, 0x00000054
+    call    check
+    __test_lb_misaligned_3:
+    lb      x10, 7(sp)
+    li      x11, 0xFFFFFFFE
+    call    check
+    __test_lbu_misaligned_1:
+    lbu     x10, 5(sp)
+    li      x11, 0x000000BA
+    call    check
+    __test_sw_misaligned_1:
+    li      x11, 0xC001CAFE
+    sw      x11, 1(sp)
+    lw      x10, 1(sp)
+    call    check
+    lw      x10, 0(sp)
+    li      x11, 0x01CAFE10
+    call    check
+    __test_sw_misaligned_2:
+    li      x11, 0xBAADB002
+    sw      x11, 2(sp)
+    lw      x10, 2(sp)
+    call    check
+    lw      x10, 4(sp)
+    li      x11, 0xFEDCBAAD
+    call    check
+    __test_sw_misaligned_3:
+    li      x11, 0xFA180F4F
+    sw      x11, 3(sp)
+    lw      x10, 3(sp)
+    call    check
+    lw      x10, 4(sp)
+    li      x11, 0xFEFA180F
+    __test_sh_misaligned_1:
+    sw      zero, 0(sp)
+    li      x11, 0xFFFF1234
+    sh      x11, 1(sp)
+    lw      x10, 0(sp)
+    li      x11, 0x00123400
+    call    check
+    __test_sh_misaligned_2:
+    sw      zero, 4(sp)
+    li      x11, 0xEFDA3301
+    sh      x11, 2(sp)
+    lw      x10, 0(sp)
+    li      x11, 0x33013400
+    call    check
+    lw      x10, 4(sp)
+    mv      x11, zero
+    call    check
+    __test_sh_misaligned_3:
+    li      x11, 0xBAADF00D
+    sh      x11, 3(sp)
+    lw      x10, 0(sp)
+    li      x11, 0x0D013400
+    call    check
+    lw      x10, 4(sp)
+    li      x11, 0x000000F0
+    call    check
+    __test_sb_misaligned_1:
+    sw      zero, 4(sp)
+    li      x11, 0xFFFFFF77
+    sb      x11, 1(sp)
+    lw      x10, 0(sp)
+    li      x11, 0x0d017700
+    call    check
+    __test_sb_misaligned_2:
+    li      x11, 0xFFFFFF99
+    sb      x11, 2(sp)
+    lw      x10, 0(sp)
+    li      x11, 0x0d997700
+    call    check
+    __test_sb_misaligned_3:
+    li      x11, 0xFFFFFFAD
+    sb      x11, 3(sp)
+    lw      x10, 0(sp)
+    li      x11, 0xAD997700
+    call    check
+    lw      x10, 4(sp)
+    mv      x11, zero
+    call    check
+    __test_misaligned_end:
+    addi    sp, sp, 8
+    // de-initialize misaligned memory test
 
 
     __test_done:

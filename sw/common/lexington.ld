@@ -4,8 +4,8 @@ OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
 
-__Lexington_rom_size = 4K;
-__Lexington_ram_size = 4K;
+__Lexington_rom_size = 8K;
+__Lexington_ram_size = 8K;
 
 __Lexington_rom_base = 0x00000000;
 __Lexington_ram_base = 0x40000000;

@@ -10,8 +10,8 @@ package lexington;
     localparam DEFAULT_CLK_FREQ         = 10_000_000;       // core clock frequency in Hz
 
     // Address Widths
-    localparam DEFAULT_ROM_ADDR_WIDTH   = 10;               // word-addressable ROM address bits
-    localparam DEFAULT_RAM_ADDR_WIDTH   = 10;               // word-addressable RAM address bits
+    localparam DEFAULT_ROM_ADDR_WIDTH   = 11;               // word-addressable ROM address bits
+    localparam DEFAULT_RAM_ADDR_WIDTH   = 11;               // word-addressable RAM address bits
     localparam DEFAULT_AXI_ADDR_WIDTH   = 29;               // byte-addressable AXI address space bits
     localparam MTIME_ADDR_WIDTH         = 4;                // byte-addressable machine timer address bits
     localparam GPTIM_ADDR_WIDTH         = 4;                // byte-addressable general-purpose timer address bits
