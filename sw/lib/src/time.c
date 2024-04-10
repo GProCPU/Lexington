@@ -4,12 +4,12 @@ volatile uint32_t __ticks_per_milli;
 volatile uint32_t __millis = 0;
 
 
-void __MTI_HANDLER() {
-    __save_context();
+void __attribute__((interrupt)) __MTI_HANDLER() {
+    // __save_context();
     set_mtimecmp(get_mtimecmp() + __ticks_per_milli);
     __millis++;
-    __restore_context();
-    mret_interrupt();
+    // __restore_context();
+    // mret_interrupt();
 }
 
 void time_init(uint32_t ticks_per_milli) {

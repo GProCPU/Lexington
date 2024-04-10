@@ -20,22 +20,23 @@ module vga_frame_buff #(
     );
 
     localparam PADDED_PIXEL_DEPTH = (PIXEL_DEPTH <= 8) ? 8 :
-                                    (PIXEL_DEPTH <= 16) : 16 :
+                                    (PIXEL_DEPTH <= 16) ? 16 :
                                     32;
     localparam AXI_ADDR_WIDTH = $clog2(NUM_PIXELS * (PADDED_PIXEL_DEPTH/8));
+    localparam WORD_ADDR_WIDTH = AXI_ADDR_WIDTH - $clog2(AXI_DATA_WIDTH/8);
 
     // VGA read signals
-    logic [AXI_ADDR_WIDTH-1:0] _raw_px_addr;
+    logic [WORD_ADDR_WIDTH-1:0] _raw_px_addr;
     logic [AXI_DATA_WIDTH-1:0] _raw_px_data;
 
     // AXI read internal buffers
-    logic [PIXEL_ADDR_WIDTH-1:0] _araddr;
+    logic [WORD_ADDR_WIDTH-1:0] _araddr;
     logic [AXI_DATA_WIDTH-1:0] _rdata, _rdata_reg;
 
     // AXI write internal buffers
-    logic [PIXEL_ADDR_WIDTH-1:0] _awaddr;
+    logic [WORD_ADDR_WIDTH-1:0] _awaddr;
     logic [AXI_DATA_WIDTH-1:0] _wdata;
-    logic [(AXI_ADDR_WIDTH/8)-1:0] _wstrb;
+    logic [(AXI_DATA_WIDTH/8)-1:0] _wstrb;
 
     // Arbiter RAM signal for AXI read/write
     logic _ram_rd_req;
@@ -44,7 +45,7 @@ module vga_frame_buff #(
     logic _ram_wr_ack;
     logic _ram_en;
     logic [(AXI_DATA_WIDTH/8)-1:0] _ram_wen;
-    logic [PIXEL_ADDR_WIDTH-1:0] _ram_addr;
+    logic [WORD_ADDR_WIDTH-1:0] _ram_addr;
 
 
     ////////////////////////////////////////////////////////////
@@ -54,7 +55,7 @@ module vga_frame_buff #(
     bytewrite_dual_port_ram #(
         .NUM_COL(AXI_DATA_WIDTH/8), // write-enable lanes
         .COL_WIDTH(8),              // bits-per write-enable line
-        .ADDR_WIDTH(AXI_ADDR_WIDTH)
+        .ADDR_WIDTH(WORD_ADDR_WIDTH)
         // DATA_WIDTH = NUM_COL * COL_WIDTH
     ) FRAME_BUFF (
         .clk_a(pxclk),
@@ -80,15 +81,26 @@ module vga_frame_buff #(
     ////////////////////////////////////////////////////////////
     // BEGIN: VGA read
     ////////////////////////////////////////////////////////////
-    assign _raw_px_addr = px_addr << (AXI_ADDR_WIDTH-PIXEL_ADDR_WIDTH);
-    generate
-        if (8 == PADDED_PIXEL_DEPTH) begin
-            assign px_data = _raw_px_data >> px_addr[1:0];
-        end
-        else if (16 == PADDED_PIXEL_DEPTH) begin
-            assign px_data = _raw_px_data >> px_addr[0];
+    logic [PIXEL_ADDR_WIDTH-1:0] px_addr_buff;
+    always_ff @(posedge pxclk) begin
+        if (!rst_n) begin
+            px_addr_buff <= 0;
         end
         else begin
+            px_addr_buff <= px_addr;
+        end
+    end
+    generate
+        if (8 == PADDED_PIXEL_DEPTH) begin
+            assign _raw_px_addr = px_addr >> 2;
+            assign px_data = _raw_px_data >> (px_addr_buff[1:0] * PADDED_PIXEL_DEPTH);
+        end
+        else if (16 == PADDED_PIXEL_DEPTH) begin
+            assign _raw_px_addr = px_addr >> 1;
+            assign px_data = _raw_px_data >> (px_addr_buff[0] * PADDED_PIXEL_DEPTH);
+        end
+        else begin
+            assign _raw_px_addr = px_addr;
             assign px_data = _raw_px_data;
         end
     endgenerate
@@ -117,14 +129,14 @@ module vga_frame_buff #(
                 _ram_wr_ack = 1;
                 _ram_en     = 1;
                 _ram_wen    = _wstrb;
-                _ram_addr   = _araddr;
+                _ram_addr   = _awaddr;
             end
             else if (_ram_rd_req) begin
                 _ram_rd_ack = 1;
                 _ram_wr_ack = 0;
                 _ram_en     = 1;
                 _ram_wen    = 0;
-                _ram_addr   = _awaddr;
+                _ram_addr   = _araddr;
             end
             else begin
                 _ram_rd_ack = 0;
@@ -154,7 +166,7 @@ module vga_frame_buff #(
             axi.rresp   <= axi.OKAY;
             _araddr     <= 0;
             _rdata_reg  <= 0;
-            _ram_rd_req <= 1;
+            _ram_rd_req <= 0;
         end
         else begin
             case (rd_state)
@@ -170,7 +182,7 @@ module vga_frame_buff #(
                         else begin
                             rd_state    <= RAM_RD;
                             axi.arready <= 0;
-                            _araddr     <= axi.araddr;
+                            _araddr     <= axi.araddr >> $clog2(AXI_DATA_WIDTH/8);
                             _ram_rd_req <= 1;
                         end
                     end
@@ -230,15 +242,17 @@ module vga_frame_buff #(
     ////////////////////////////////////////////////////////////
     // BEGIN: AXI write (port-B)
     ////////////////////////////////////////////////////////////
+    logic _awaddr_misaligned;
     enum {AW_READY, W_READY, RAM_WR, B_VALID} wr_state;
     always_ff@(posedge axi.aclk) begin
         if (!axi.areset_n) begin
-            wr_state    <= W_READY;
+            wr_state    <= AW_READY;
             axi.awready <= 1;
             axi.wready  <= 0;
             axi.bvalid  <= 0;
             axi.bresp   <= axi.OKAY;
             _awaddr     <= 0;
+            _awaddr_misaligned <= 0;
             _wdata      <= 0;
             _wstrb      <= 0;
             _ram_wr_req <= 0;
@@ -249,7 +263,8 @@ module vga_frame_buff #(
                 AW_READY: begin // awready asserted, waiting for awvalid
                     if (axi.awvalid) begin
                         wr_state    <= W_READY;
-                        _awaddr     <= axi.awaddr;
+                        _awaddr     <= axi.awaddr >> $clog2(AXI_DATA_WIDTH/8);
+                        _awaddr_misaligned <= (| axi.awaddr[1:0]);
                         axi.awready <= 0;
                         axi.wready  <= 1;
                     end
@@ -257,7 +272,7 @@ module vga_frame_buff #(
 
                 W_READY: begin // wready asserted, waiting for wvalid
                     if (axi.wvalid) begin
-                        if (|_awaddr[1:0]) begin // must be word-aligned
+                        if (_awaddr_misaligned) begin // must be word-aligned
                             wr_state    <= B_VALID;
                             axi.wready  <= 0;
                             axi.bvalid  <= 1;
@@ -278,6 +293,7 @@ module vga_frame_buff #(
                         wr_state    <= B_VALID;
                         axi.bvalid  <= 1;
                         axi.bresp   <= axi.OKAY;
+                        _ram_wr_req <= 0;
                     end
                 end
 
@@ -294,6 +310,12 @@ module vga_frame_buff #(
                     axi.awready <= 1;
                     axi.wready  <= 0;
                     axi.bvalid  <= 0;
+                    axi.bresp   <= axi.OKAY;
+                    _awaddr     <= 0;
+                    _awaddr_misaligned <= 0;
+                    _wdata      <= 0;
+                    _wstrb      <= 0;
+                    _ram_wr_req <= 0;
                 end
 
             endcase

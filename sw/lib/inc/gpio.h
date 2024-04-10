@@ -25,6 +25,14 @@ typedef volatile struct __attribute__((packed,aligned(4))) {
 #define GPIOB           ((gpio_t*) GPIOB_BASE)
 #define GPIOC           ((gpio_t*) GPIOC_BASE)
 
+#define GPIO_LED        GPIOA
+#define GPIO_SW         GPIOB
+#define GPIO_BTN        GPIOC
+#define GPIO_BTN_U      12
+#define GPIO_BTN_L      13
+#define GPIO_BTN_R      14
+#define GPIO_BTN_D      15
+
 
 void gpio_mode(gpio_t* bank, uint32_t pin, uint32_t mode);
 uint32_t gpio_read(gpio_t* bank, uint32_t pin);

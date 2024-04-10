@@ -68,7 +68,8 @@ CC_OPTS += -g3
 # Linker flags
 LS_LIBS = -lm -lc -lgcc
 # Disassemble opts
-DUMP_OPTS ?= --visualize-jumps -Mnumeric,no-aliases
+# DUMP_OPTS ?= --visualize-jumps -Mnumeric,no-aliases
+DUMP_OPTS ?= --visualize-jumps -Mno-aliases
 
 
 # Macros

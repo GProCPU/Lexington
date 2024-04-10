@@ -75,7 +75,7 @@ module dbus #(
     assign rom_addr     = word_addr[ROM_ADDR_WIDTH-1:0];        // word-addressable
     assign ram_addr     = word_addr[RAM_ADDR_WIDTH-1:0];        // word-addressable
     assign mtime_addr   = word_addr[MTIME_ADDR_WIDTH-1:0];      // word-addressable
-    assign axi_addr     = addr[AXI_ADDR_WIDTH-1:0];             // byte-addressable
+    assign axi_addr     = addr[AXI_ADDR_WIDTH-1:0] ^ byte_index;// byte-addressable, word-aligned
 
     // Detect address space
     logic is_rom_addr, is_ram_addr, is_mtime_addr, is_axi_addr;

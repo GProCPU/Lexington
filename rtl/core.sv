@@ -1,3 +1,4 @@
+//depend sync.sv
 //depend core/*.sv
 `timescale 1ns/1ps
 

@@ -1,3 +1,4 @@
+//depend sync.sv
 //depend core.sv
 //depend core/*.sv
 //depend debug.sv

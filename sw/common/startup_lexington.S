@@ -240,6 +240,12 @@ __UNKNOWN_EX_HANDLER:
     .weak   __STORE_PAGE_FAULT_HANDLER
     .weak   __UNKNOWN_EX_HANDLER
 __DEFAULT_EX_HANDLER:
+    // Print mcause to LEDs
+    li      t0, 0xFFFFFFA0          // GPIOA base address
+    li      t1, 0xFFFF              // bitmask
+    sw      t1, 0(t0)               // set output mode
+    csrr    t2, mcause              // get exception cause
+    sw      t2, 8(t0)               // set LEDs
     // dead loop
     j       .
 

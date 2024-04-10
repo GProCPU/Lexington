@@ -1,5 +1,5 @@
-//cmd cd ${PROJ_DIR}/sw/projects/blink && make build dump
-//cmd cp ${PROJ_DIR}/sw/projects/blink/rom.hex .
+//cmd cd ${PROJ_DIR}/sw/projects/vga_demo && make build dump
+//cmd cp ${PROJ_DIR}/sw/projects/vga_demo/rom.hex .
 `timescale 1ns/1ps
 
 
@@ -7,7 +7,7 @@ module soc_TB;
 
     localparam CLK_PERIOD = 100;
     localparam CYCLES_PER_MILLI = 1_000_000 / CLK_PERIOD;
-    localparam SIM_MILLIS = 40;
+    localparam SIM_MILLIS = 20;
 
     localparam MAX_CYCLES = SIM_MILLIS * CYCLES_PER_MILLI;
     integer clk_count = 0;
@@ -60,28 +60,47 @@ module soc_TB;
 
     // Pixel clock (25 MHz)
     initial pxclk = 1;
-    initial forever #20 pxclk = pxclk;
+    initial forever #20 pxclk = ~pxclk;
 
 
     // Initialize
     initial begin
 
+        fid = $fopen("soc.log");
+        $dumpfile("soc.vcd");
+        $dumpvars(5, soc_TB);
+
         rst = 1;
         #200;
         rst = 0;
 
-        fid = $fopen("soc.log");
-        $dumpfile("soc.vcd");
-        $dumpvars(5, soc_TB);
     end
 
 
-    // Stimulus
+    // Track sim time
     integer millis = 0;
     initial forever begin
         $write("%1d/%1d ms\n", millis, SIM_MILLIS);
         millis++;
         #(CYCLES_PER_MILLI * CLK_PERIOD);
+    end
+
+
+    // Debug messages
+    always @(posedge clk) begin
+        if (rst) begin
+        end
+        else begin
+            if (DUT.CORE0.DECODER.opcode == DUT.CORE0.DECODER.MISC_MEM
+                && DUT.CORE0.DECODER.funct3 == DUT.CORE0.DECODER.FUNCT3_FENCE)
+            begin
+                // Fence instruction triggers debug
+                $write("%5d    ", clk_count);
+                $write("PC=0x%08X\n", DUT.CORE0.pc);
+                $fwrite(fid,"%5d    ", clk_count);
+                $fwrite(fid,"PC=0x%08X\n", DUT.CORE0.pc);
+            end
+        end
     end
 
 

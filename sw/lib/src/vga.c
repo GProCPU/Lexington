@@ -90,43 +90,43 @@ void vga_draw_rect(int32_t x, int32_t y, int32_t w, int32_t h, rgb_t color) {
 }
 
 void vga_fill_rect(int32_t x, int32_t y, int32_t w, int32_t h, rgb_t color) {
-    rgb_t* row = &(VGA_FRAME_BUFF[(y*VGA_WIDTH)+x]);
-    rgb_t* curr = row;
-    for (int32_t i=0; i<h; i++) {
-        for (int32_t j=0; j<w; j++) {
-            curr[0] = color;
+    volatile rgb_t* row = VGA_FRAME_BUFF + (y*VGA_WIDTH) + x;
+    volatile rgb_t* curr = row;
+    for (int32_t _y=0; _y<h; _y++) {
+        for (int32_t _x=0; _x<w; _x++) {
+            curr[_x] = color;
         }
-        row += VGA_WIDTH;
+        row  = row + VGA_WIDTH;
         curr = row;
     }
 }
 
-void vga_draw_h_line(int32_t x, int32_t y, int32_t w, rgb_t color) {
-    rgb_t* curr = &(VGA_FRAME_BUFF[(y*VGA_WIDTH)+x]);
-    for (int32_t i=0; i<w; i++) {
-        curr[0] = color;
-        curr++;
-    }
-}
+// void vga_draw_h_line(int32_t x, int32_t y, int32_t w, rgb_t color) {
+//     volatile rgb_t* curr = &(VGA_FRAME_BUFF[(y*VGA_WIDTH)+x]);
+//     for (int32_t i=0; i<w; i++) {
+//         curr[0] = color;
+//         curr++;
+//     }
+// }
 
-void vga_draw_v_line(int32_t x, int32_t y, int32_t h, rgb_t color) {
-    rgb_t* curr = &(VGA_FRAME_BUFF[(y*VGA_WIDTH)+x]);
-    for (int32_t i=0; i<h; i++) {
-        curr[0] = color;
-        curr += VGA_WIDTH;
-    }
-}
+// void vga_draw_v_line(int32_t x, int32_t y, int32_t h, rgb_t color) {
+//     volatile rgb_t* curr = &(VGA_FRAME_BUFF[(y*VGA_WIDTH)+x]);
+//     for (int32_t i=0; i<h; i++) {
+//         curr[0] = color;
+//         curr += VGA_WIDTH;
+//     }
+// }
 
-void vga_draw_bitmap(int32_t x, int32_t y, rgb_t* bmp, int32_t w, int32_t h) {
-    rgb_t* row = &(VGA_FRAME_BUFF[(y*VGA_WIDTH) + x]);
-    rgb_t* curr = row;
-    rgb_t* bmp_curr = bmp;
-    for (int32_t i=0; i<h; i++) {
-        for (int32_t j=0; j<w; i++) {
-            curr[0] = bmp_curr[0];
-            bmp_curr++;
-        }
-        row += VGA_WIDTH;
-        curr = row;
-    }
-}
+// void vga_draw_bitmap(int32_t x, int32_t y, rgb_t* bmp, int32_t w, int32_t h) {
+//     volatile rgb_t* row = &(VGA_FRAME_BUFF[(y*VGA_WIDTH) + x]);
+//     volatile rgb_t* curr = row;
+//     rgb_t* bmp_curr = bmp;
+//     for (int32_t i=0; i<h; i++) {
+//         for (int32_t j=0; j<w; i++) {
+//             curr[0] = bmp_curr[0];
+//             bmp_curr++;
+//         }
+//         row += VGA_WIDTH;
+//         curr = row;
+//     }
+// }

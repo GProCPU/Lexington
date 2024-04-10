@@ -25,7 +25,7 @@ package lexington;
     localparam DEFAULT_RAM_BASE_ADDR    = 32'h4000_0000;    // must be aligned to RAM size
     localparam DEFAULT_MTIME_BASE_ADDR  = 32'hC000_0000;    // see CSR documentation
     localparam DEFAULT_AXI_BASE_ADDR    = 32'hE000_0000;    // must be aligned to AXI address space
-    localparam VGA_BASE_ADDR            = 32'hFFD0_0000;    // VGA
+    localparam VGA_BASE_ADDR            = 32'hE000_0000;    // VGA
     localparam TIM0_BASE_ADDR           = 32'hFFFF_FF0F;    // TIM0
     localparam TIM1_BASE_ADDR           = 32'hFFFF_FF1F;    // TIM1
     localparam UART0_BASE_ADDR          = 32'hFFFF_FF8F;    // UART0
@@ -45,7 +45,7 @@ package lexington;
     localparam VGA_PIXEL_WIDTH          = 320;
     localparam VGA_PIXEL_HEIGHT         = 240;
     localparam VGA_PIXEL_FORMAT         = "rgb332";
-    localparam VGA_ADDR_WIDTH           = $clog2(VGA_H_LINE * VGA_V_LINE * 4); // byte-addressable VGA address
+    localparam VGA_ADDR_WIDTH           = $clog2(VGA_PIXEL_WIDTH * VGA_PIXEL_HEIGHT * 1); // byte-addressable VGA address
 
     // Other Tunable Parameters
     localparam MTIME_PERIOD             = 1_000;            // mtime 'tick' period in ns

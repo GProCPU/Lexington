@@ -25,11 +25,13 @@ module bytewrite_dual_port_ram #(
         output logic [DATA_WIDTH-1:0] dout_b
     );
 
+    integer i, j;
 
     // Memory
     logic [DATA_WIDTH-1:0] ram_block [(2**ADDR_WIDTH)-1:0];
-
-    integer i;
+    initial for (j=0; j<2**ADDR_WIDTH; j++) begin
+        ram_block[j] = 0;
+    end
 
 
     // Port-A
