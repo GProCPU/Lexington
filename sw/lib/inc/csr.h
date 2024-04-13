@@ -32,6 +32,10 @@
 #define CSR_TIMEH           0xC80
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 inline uint32_t __attribute__ ((always_inline)) csrrw(const uint32_t csr, uint32_t data) {
     uint32_t result;
     __asm__ volatile inline (
@@ -108,5 +112,8 @@ inline uint32_t __attribute__ ((always_inline)) csr_swap(const uint32_t csr, uin
     return data;
 }
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // __CSR_H

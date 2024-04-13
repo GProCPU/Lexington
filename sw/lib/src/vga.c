@@ -49,9 +49,9 @@ void vga_draw_line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, rgb_t color) 
 
     for (; x0 <= x1; x0++) {
         if (steep) {
-            vga_draw_pixel(y0, x0, color);
+            VGA_FRAME_BUFF[(x0*VGA_WIDTH)+y0] = color;
         } else {
-            vga_draw_pixel(x0, y0, color);
+            VGA_FRAME_BUFF[(y0*VGA_WIDTH)+x0] = color;
         }
         err -= dy;
         if (err < 0) {
@@ -62,29 +62,29 @@ void vga_draw_line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, rgb_t color) 
 }
 
 void vga_draw_rect(int32_t x, int32_t y, int32_t w, int32_t h, rgb_t color) {
-    rgb_t* top_left = &(VGA_FRAME_BUFF[(y*VGA_WIDTH)+x]);
-    rgb_t* curr = top_left;
+    volatile rgb_t* top_left = &(VGA_FRAME_BUFF[(y*VGA_WIDTH)+x]);
+    volatile rgb_t* curr = top_left;
     // top
     for (int32_t i=0; i<w; i++) {
-        curr[0] = color;
+        *curr = color;
         curr++;
     }
     // right
     curr--;
     for (int32_t i=0; i<h; i++) {
-        curr[0] = color;
+        *curr = color;
         curr += VGA_WIDTH;
     }
     // left
     curr = top_left;
     for (int32_t i=0; i<h; i++) {
-        curr[0] = color;
+        *curr = color;
         curr += VGA_WIDTH;
     }
     // bottom
     curr -= VGA_WIDTH;
     for (int32_t i=0; i<w; i++) {
-        curr[0] = color;
+        *curr = color;
         curr++;
     }
 }
@@ -101,32 +101,40 @@ void vga_fill_rect(int32_t x, int32_t y, int32_t w, int32_t h, rgb_t color) {
     }
 }
 
-// void vga_draw_h_line(int32_t x, int32_t y, int32_t w, rgb_t color) {
-//     volatile rgb_t* curr = &(VGA_FRAME_BUFF[(y*VGA_WIDTH)+x]);
-//     for (int32_t i=0; i<w; i++) {
-//         curr[0] = color;
-//         curr++;
-//     }
-// }
+void vga_draw_h_line(int32_t x, int32_t y, int32_t w, rgb_t color) {
+    volatile rgb_t* curr = VGA_FRAME_BUFF + (y*VGA_WIDTH) + x;
+    for (int32_t i=0; i<w; i++) {
+        *curr = color;
+        curr++;
+    }
+}
 
-// void vga_draw_v_line(int32_t x, int32_t y, int32_t h, rgb_t color) {
-//     volatile rgb_t* curr = &(VGA_FRAME_BUFF[(y*VGA_WIDTH)+x]);
-//     for (int32_t i=0; i<h; i++) {
-//         curr[0] = color;
-//         curr += VGA_WIDTH;
-//     }
-// }
+void vga_draw_v_line(int32_t x, int32_t y, int32_t h, rgb_t color) {
+    volatile rgb_t* curr = VGA_FRAME_BUFF + (y*VGA_WIDTH) + x;
+    for (int32_t i=0; i<h; i++) {
+        *curr = color;
+        curr += VGA_WIDTH;
+    }
+}
 
-// void vga_draw_bitmap(int32_t x, int32_t y, rgb_t* bmp, int32_t w, int32_t h) {
-//     volatile rgb_t* row = &(VGA_FRAME_BUFF[(y*VGA_WIDTH) + x]);
-//     volatile rgb_t* curr = row;
-//     rgb_t* bmp_curr = bmp;
-//     for (int32_t i=0; i<h; i++) {
-//         for (int32_t j=0; j<w; i++) {
-//             curr[0] = bmp_curr[0];
-//             bmp_curr++;
-//         }
-//         row += VGA_WIDTH;
-//         curr = row;
-//     }
-// }
+void vga_draw_bitmap(int32_t x, int32_t y, const rgb_t* bmp, int32_t w, int32_t h) {
+    volatile rgb_t* row = VGA_FRAME_BUFF + (y*VGA_WIDTH) + x;
+    volatile rgb_t* curr = row;
+    const rgb_t* bmp_curr = bmp;
+    for (int32_t _y=0; _y<h; _y++) {
+        for (int32_t _x=0; _x<w; _x++) {
+            curr[_x] = *bmp_curr;
+            bmp_curr++;
+        }
+        row = row + VGA_WIDTH;
+        curr = row;
+    }
+}
+
+void vga_fill_screen(rgb_t color) {
+    volatile rgb_t* curr = VGA_FRAME_BUFF;
+    for (uint32_t i=0; i<VGA_WIDTH*VGA_HEIGHT; i++) {
+        *curr = color;
+        curr++;
+    }
+}

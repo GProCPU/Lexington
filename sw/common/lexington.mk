@@ -1,6 +1,7 @@
 
 
 APP_SRC ?= $(wildcard ./*.c) $(wildcard ./*.cpp) $(wildcard ./*.s) $(wildcard ./*.S)
+APP_INC ?= $(wildcard ./*.h) $(wildcard ./*.hpp)
 
 # Compiler toolchain
 RISCV_PREFIX ?= riscv32-unknown-elf-
@@ -28,6 +29,8 @@ CORE_SRC  = $(wildcard $(LEXINGTON_SRC_PATH)/*.c) $(wildcard $(LEXINGTON_SRC_PAT
 # Start-up code
 CORE_SRC += $(LEXINGTON_COM_PATH)/startup_lexington.S
 
+CORE_INC  = $(wildcard $(LEXINGTON_INC_PATH)/*.h) $(wildcard $(LEXINGTON_INC_PATH)/*.hpp)
+
 # Linker script
 LD_SCRIPT ?= $(LEXINGTON_COM_PATH)/lexington.ld
 # MakeHex script
@@ -42,6 +45,9 @@ DUMP    = disassembly.dump
 SRC  = $(APP_SRC)
 SRC += $(CORE_SRC)
 OBJ  = $(SRC:%=%.o)
+
+DEP  = $(APP_INC)
+DEP += Makefile
 
 
 # --------------------------------------------------
@@ -58,18 +64,20 @@ GDB     = $(RISCV_PREFIX)gdb
 # --------------------------------------------------
 # Flags
 # --------------------------------------------------
+C_STD = c11
+CPP_STD = c++17
 # Main compiler opts
-CC_OPTS  = -march=$(MARCH) -mabi=$(MABI) -ffunction-sections -fdata-sections -Wl,--gc-sections -nostartfiles
-CC_OPTS += -std=c11 -Os -mstrict-align -mbranch-cost=0
+CC_OPTS  = -march=$(MARCH) -mabi=$(MABI) -ffunction-sections -fdata-sections -fno-common -Wl,--gc-sections -nostartfiles
+CC_OPTS += -Os -mstrict-align -mbranch-cost=0
 # Compiler warning flags
 CC_OPTS += -Wall -Wshadow -Wdouble-promotion -Wformat-overflow -Wformat-truncation -Wundef -fno-common -Wconversion
 # Compiler debug flags
-CC_OPTS += -g3
+# CC_OPTS += -g3
 # Linker flags
 LS_LIBS = -lm -lc -lgcc
 # Disassemble opts
 # DUMP_OPTS ?= --visualize-jumps -Mnumeric,no-aliases
-DUMP_OPTS ?= --visualize-jumps -Mno-aliases
+DUMP_OPTS ?= -D --disassemble-zeroes --visualize-jumps -Mno-aliases 
 
 
 # Macros
@@ -88,18 +96,18 @@ clean:
 
 
 # Compile
-%.s.o: %.s
+%.s.o: %.s $(DEP)
 	@echo "Compiling $<"
-	@$(CC) -c $(CC_OPTS) -I $(LEXINGTON_INC_PATH) $< -o $@
-%.S.o: %.S
+	@$(CC) -c $(CC_OPTS) -std=$(C_STD) -I $(LEXINGTON_INC_PATH) $< -o $@
+%.S.o: %.S $(DEP)
 	@echo "Compiling $<"
-	@$(CC) -c $(CC_OPTS) -I $(LEXINGTON_INC_PATH) $< -o $@
-%.c.o: %.c
+	@$(CC) -c $(CC_OPTS) -std=$(C_STD) -I $(LEXINGTON_INC_PATH) $< -o $@
+%.c.o: %.c $(DEP)
 	@echo "Compiling $<"
-	@$(CC) -c $(CC_OPTS) -I $(LEXINGTON_INC_PATH) $< -o $@
-%.cpp.o: %.cpp
+	@$(CC) -c $(CC_OPTS) -std=$(C_STD) -I $(LEXINGTON_INC_PATH) $< -o $@
+%.cpp.o: %.cpp $(DEP)
 	@echo "Compiling $<"
-	@$(CC) -c $(CC_OPTS) -I $(LEXINGTON_INC_PATH) $< -o $@
+	@$(CC) -c $(CC_OPTS) -std=$(CPP_STD) -I $(LEXINGTON_INC_PATH) $< -o $@
 
 # Link
 $(APP_ELF): $(OBJ)
@@ -124,4 +132,4 @@ $(APP_HEX): $(APP_BIN)
 
 $(DUMP): build
 	@echo "Disassembling"
-	@$(OBJDUMP) -d $(DUMP_OPTS) $(APP_ELF) > $@
+	@$(OBJDUMP) $(DUMP_OPTS) $(APP_ELF) > $@

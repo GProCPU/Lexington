@@ -29,7 +29,7 @@ SECTIONS
         KEEP(*(.text.startup)); /* keep start-up code at beginning of ROM */
         *(.text .text.*)
 
-        /* Constructor/desctructor pointer array */
+        /* Constructor/destructor pointer array */
         PROVIDE_HIDDEN(__init_array_start = .);
         KEEP(*(.preinit_arra))
         KEEP(*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))

@@ -1,11 +1,6 @@
 #ifndef __LEXINGTON_H
 #define __LEXINGTON_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 // Standard libraries
 #include <stdint.h>
 #include <stdbool.h>
@@ -17,10 +12,15 @@ extern "C" {
 // I/O and peripherals
 #include "csr.h"
 #include "trap.h"
-#include "time.h"
+#include "mtime.h"
 #include "gpio.h"
 #include "uart.h"
 #include "vga.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 // Endianness

@@ -23,6 +23,7 @@
         "BRAM",
         "BREADY",
         "BRESP",
+        "btns",
         "BVALID",
         "bytewrite",
         "CLKFB",
@@ -33,6 +34,7 @@
         "CLKOUT",
         "comercial",
         "comparand",
+        "csrci",
         "CSRR",
         "CSRRC",
         "CSRRCI",
@@ -48,6 +50,7 @@
         "DECERR",
         "Digilent",
         "DIVCLK",
+        "dmem",
         "dout",
         "dumpfile",
         "dumpvars",
@@ -79,6 +82,7 @@
         "ibus",
         "idata",
         "ifndef",
+        "imem",
         "immediates",
         "inout",
         "instret",
@@ -86,6 +90,7 @@
         "JALR",
         "JEDEC",
         "JXADC",
+        "LOADADDR",
         "marchid",
         "mcause",
         "mconfigptr",
@@ -177,11 +182,5 @@
         "yaddr",
         "ystep"
     ],
-    "C_Cpp.default.includePath": [
-        "sw/lib/inc"
-    ],
-    "C_Cpp.default.systemIncludePath": [
-        "W:/opt/riscv/lib/gcc/riscv32-unknown-elf/12.2.0/include"
-    ],
-    "C_Cpp.errorSquiggles": "disabled"
+    "C_Cpp.clang_format_style": "LLVM"
 }

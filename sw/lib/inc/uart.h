@@ -4,6 +4,9 @@
 #include <stdint.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef volatile struct __attribute__((packed,aligned(4))) {
     uint32_t DATA;
@@ -33,5 +36,8 @@ typedef volatile struct __attribute__((packed,aligned(4))) {
 void uart_tx(UART_t* UART, uint8_t data);
 uint8_t uart_rx(UART_t* UART);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // __UART_H

@@ -50,6 +50,10 @@
 #define MTVEC_BASE_MASK                 ((uint32_t)0xFFFFFFFC)
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Global interrupt enable
 static void enable_global_interrupts();
 static void disable_global_interrupts();
@@ -255,5 +259,8 @@ inline void __attribute__((always_inline)) mret_exception() {
     );
 }
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // __TRAP_H

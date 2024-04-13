@@ -1,35 +1,23 @@
 {
     "configurations": [
         {
-            "name": "Linux",
-            "includePath": [
-                "${default}"
-            ],
-            "defines": [],
-            "compilerPath": "/usr/bin/clang",
-            "cStandard": "c17",
-            "cppStandard": "c++14",
-            "intelliSenseMode": "linux-clang-x64",
-            "compilerPathInCppPropertiesJson": "/usr/bin/gcc",
-            "mergeConfigurations": false
-        },
-        {
             "name": "rv32i",
             "includePath": [
-                "/opt/riscv/lib/gcc/riscv32-unknown-elf/12.2.0/include",
-                "${workspaceFolder}/sw/lib/inc/**",
-                "${default}"
+                "${default}",
+                "${workspaceFolder}/sw/lib/inc/**"
             ],
-            "defines": [],
-            "compilerPath": "/opt/riscv/bin/riscv32-unknown-elf-gcc",
+            "defines": [
+                "__riscv",
+                "__riscv_xlen=32",
+                "USE_SIGNALS"
+            ],
+            "compilerPath": "/opt/riscv/bin/riscv32-unknown-elf-g++",
             "cStandard": "c11",
-            "cppStandard": "c++11",
-            "intelliSenseMode": "linux-gcc-arm",
-            "mergeConfigurations": false,
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x86",
             "compilerArgs": [
                 "-march=rv32i_zicsr",
                 "-mabi=ilp32",
-                "-std=c11",
                 "-Wall"
             ]
         }

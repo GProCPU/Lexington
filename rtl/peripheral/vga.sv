@@ -102,8 +102,8 @@ module vga #(
 
     generate
         if ("rgb332" == PIXEL_FORMAT) begin
-            assign r = {rgb[7:5], rgb[5]};
-            assign g = {rgb[4:2], rgb[2]};
+            assign r = {rgb[7:5], rgb[7]};
+            assign g = {rgb[4:2], rgb[4]};
             assign b = {rgb[1:0], rgb[1:0]};
         end
         else if ("rgb12" == PIXEL_FORMAT) begin

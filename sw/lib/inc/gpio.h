@@ -4,6 +4,10 @@
 #include <stdint.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define HIGH            1
 #define LOW             0
 
@@ -38,5 +42,8 @@ void gpio_mode(gpio_t* bank, uint32_t pin, uint32_t mode);
 uint32_t gpio_read(gpio_t* bank, uint32_t pin);
 void gpio_write(gpio_t* bank, uint32_t pin, uint32_t state);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif //__GPIO_H
