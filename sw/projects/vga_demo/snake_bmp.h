@@ -7,6 +7,13 @@
 #define BG      (Snake::BG_COLOR)
 
 
+const rgb_t ARROW_BMP[] = {
+    FG, FG, BG, BG,
+    FG, FG, FG, FG,
+    FG, FG, BG, BG,
+    BG, BG, BG, BG
+};
+
 const rgb_t SNAKE_HEAD_BMP[] = {
     FG, BG, BG, BG,
     BG, FG, FG, BG,
@@ -51,9 +58,9 @@ const rgb_t SNAKE_BODY_TURN_FULL_BMP[] = {
 
 const rgb_t SNAKE_TAIL_BMP[] = {
     BG, BG, BG, BG,
-    BG, BG, BG, BG,
     BG, BG, FG, FG,
-    FG, FG, FG, FG
+    FG, FG, FG, FG,
+    BG, BG, BG, BG
 };
 
 const rgb_t SNAKE_FOOD_BMP[] = {

@@ -26,26 +26,35 @@ class Snake {
         static const int32_t NUM_BUGS           = 3;
         static const int32_t MAX_SIZE           = 32;
 
-        static const int32_t PADDING_H = (VGA_WIDTH % TILE_SIZE);
-        static const int32_t PADDING_V = (VGA_HEIGHT % TILE_SIZE);
-        static const int32_t PADDING_L = ((int32_t) (PADDING_H/2));
-        static const int32_t PADDING_R = (PADDING_H - PADDING_L);
-        static const int32_t PADDING_T = ((int32_t) (PADDING_V/2));
-        static const int32_t PADDING_B = (PADDING_V - PADDING_T);
+        static const int32_t PADDING_H  = (VGA_WIDTH % TILE_SIZE) + SCALED_TILE_SIZE;
+        static const int32_t PADDING_V  = (VGA_HEIGHT % TILE_SIZE) + SCALED_TILE_SIZE;
+        static const int32_t PADDING_L  = ((int32_t) (PADDING_H/2));
+        static const int32_t PADDING_R  = (PADDING_H - PADDING_L);
+        static const int32_t PADDING_T  = ((int32_t) (PADDING_V/2));
+        static const int32_t PADDING_B  = (PADDING_V - PADDING_T);
+
+        static const int32_t X_MIN      = PADDING_L;
+        static const int32_t X_MAX      = VGA_WIDTH - PADDING_R - SCALED_TILE_SIZE - 1;
+        static const int32_t Y_MIN      = PADDING_T;
+        static const int32_t Y_MAX      = VGA_HEIGHT - PADDING_B - SCALED_TILE_SIZE - 1;
 
         static const int32_t FG_COLOR = VGA_BLACK;
 
         #if defined(VGA_RGB332)
-            static const int32_t BG_COLOR = 0x94u;
+            static const int32_t BG_COLOR = 0x98u;
         #elif defined(VGA_RGB12)
-            static const int32_t BG_COLOR = 0x9B0u;
+            static const int32_t BG_COLOR = 0x9D0u;
         #endif
 
         typedef struct {
             int32_t x;
             int32_t y;
         } xy_t;
-        static const xy_t NULL_XY;
+        typedef struct {
+            int32_t x;
+            int32_t y;
+            int32_t dir;
+        } xyd_t;
 
         enum state_t {MENU, PAUSE, RUN};
 
@@ -76,10 +85,9 @@ class Snake {
     // Variables
 
         static state_t state;
-        static xy_t head;
-        static int32_t dir;
+        static xyd_t head;
         static int32_t next_dir;
-        static fifo<xy_t, MAX_SIZE> body;
+        static fifo<xyd_t, MAX_SIZE> body;
         static int32_t step_period; // delay between steps in milliseconds (inverse speed)
         static int32_t prev_step_millis;
         static int32_t prev_btn_press_millis;

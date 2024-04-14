@@ -57,6 +57,7 @@ void vga_fill_rect(int32_t x, int32_t y, int32_t w, int32_t h, rgb_t color);
 void vga_draw_h_line(int32_t x, int32_t y, int32_t w, rgb_t color);
 void vga_draw_v_line(int32_t x, int32_t y, int32_t h, rgb_t color);
 void vga_draw_bitmap(int32_t x, int32_t y, const rgb_t* bmp, int32_t w, int32_t h);
+void vga_draw_bitmap_scaled(int32_t x, int32_t y, const rgb_t* bmp, int32_t w, int32_t h, int32_t scale);
 void vga_fill_screen(rgb_t color);
 
 #ifdef __cplusplus
@@ -66,12 +67,17 @@ void vga_fill_screen(rgb_t color);
 
 #ifdef __cplusplus
 template<int32_t rotate, bool flip_horiz, bool flip_vert>
-void vga_draw_bitmap(int32_t x, int32_t y, const rgb_t* bmp, int32_t w, int32_t h) {
+void vga_draw_bitmap(int32_t x, int32_t y, const rgb_t* bmp, int32_t w, int32_t h, int32_t scale=1) {
+    // Rotation is performed while indexing the frame buffer.
+    // Vertical/horizontal flip is performed while indexing the bitmap
+    //
+    // * variable names and comments are in reference to the non-rotated, non-flipped orientation
     static_assert((rotate==0) | (rotate==360) | (rotate==90) | (rotate==-270)
-        | (rotate==180) | (rotate==-180) | (rotate==270) | (rotate==-90),
-        "Rotation must be 0, 90, 180, or 270");
-    volatile rgb_t* curr = VGA_FRAME_BUFF + (y*VGA_WIDTH) + x;
+                | (rotate==180) | (rotate==-180) | (rotate==270) | (rotate==-90),
+                "Rotation must be 0, 90, 180, or 270"
+    );
     // Rotate performed with frame buffer pointer
+    volatile rgb_t* curr = VGA_FRAME_BUFF + (y*VGA_WIDTH) + x;
     switch (rotate) {
         case 0:
         case 360:
@@ -83,65 +89,61 @@ void vga_draw_bitmap(int32_t x, int32_t y, const rgb_t* bmp, int32_t w, int32_t 
             break;
         case 180:
         case -180:
-            curr += (h-1) * VGA_WIDTH;
+            curr += (h-1) * VGA_WIDTH + w-1;
             break;
         case 270:
         case -90:
-            curr += ((h-1) * VGA_WIDTH) + w-1;
+            curr += ((h-1) * VGA_WIDTH);
             break;
     }
+    volatile rgb_t* row = curr;
     // Flip performed with bitmap pointer
     const rgb_t* bmp_curr = bmp;
     if (flip_horiz) {
-        bmp += w - 1;
+        bmp_curr += w - 1;
     }
     if (flip_vert) {
-        bmp += (h-1) * w;
+        bmp_curr += (h-1) * w;
     }
+    const rgb_t* bmp_row = bmp_curr;
+
+    // Copy pixel data from bitmap to frame buffer
     for (int32_t _y=0; _y<h; _y++) {
-        for (int32_t _x=0; _x<w; _x++) {
-            *curr = *bmp_curr;
-            switch (rotate) {
-                case 0:
-                case 360:
-                    curr++;
-                    break;
-                case 90:
-                case -270:
-                    curr += VGA_WIDTH;
-                    break;
-                case 180:
-                case -180:
-                    curr--;
-                    break;
-                case 270:
-                case -90:
-                    curr -= VGA_WIDTH;
-                    break;
+        // Bitmap index y loop
+        for (int32_t _sy=0; _sy<scale; _sy++) {
+            // Scale y loop
+            for (int32_t _x=0; _x<w; _x++) {
+                // Bitmap index x loop
+                for (int32_t _sx=0; _sx<scale; _sx++) {
+                    // Scale x loop
+                    // copy data
+                    *curr = *bmp_curr;
+                    // increment* frame buff pointer every pixel
+                    switch (rotate) {
+                        case 0:   case 360:     curr++; break;
+                        case 90:  case -270:    curr += VGA_WIDTH; break;
+                        case 180: case -180:    curr--; break;
+                        case 270: case -90:     curr -= VGA_WIDTH; break;
+                    }
+                }
+                // increment* bitmap pointer every <scale> pixels
+                bmp_curr = (flip_horiz) ? bmp_curr-1 : bmp_curr+1;
             }
-            bmp_curr = (flip_horiz) ? bmp_curr-1 : bmp_curr+1;
+            // increment* frame buff row* pointer
+            switch (rotate) {
+                case 0:   case 360:         row += VGA_WIDTH; break;
+                case 90:  case -270:        row--; break;
+                case 180: case -180:        row -= VGA_WIDTH; break;
+                case 270: case -90:         row++; break;
+            }
+            // set frame buff pointer to start of new row*
+            curr = row;
+            // reset bitmap pointer to beginning of row and repeat pixels
+            bmp_curr = bmp_row;
         }
-        // row = row + VGA_WIDTH;
-        // curr = row;
-        switch (rotate) {
-            case 0:
-            case 360:
-                curr += VGA_WIDTH;
-                break;
-            case 90:
-            case -270:
-                curr--;
-                break;
-            case 180:
-            case -180:
-                curr -= VGA_WIDTH;
-                break;
-            case 270:
-            case -90:
-                curr++;
-                break;
-        }
-        bmp_curr = (flip_vert) ? bmp_curr-w : bmp_curr+w;
+        // increment* bitmap row pointer to next row
+        bmp_row = (flip_vert) ? bmp_row - w : bmp_row + w;
+        bmp_curr = bmp_row;
     }
 }
 #endif // __cplusplus

@@ -131,6 +131,29 @@ void vga_draw_bitmap(int32_t x, int32_t y, const rgb_t* bmp, int32_t w, int32_t 
     }
 }
 
+void vga_draw_bitmap_scaled(int32_t x, int32_t y, const rgb_t* bmp, int32_t w, int32_t h, int32_t scale) {
+    volatile rgb_t* row = VGA_FRAME_BUFF + (y*VGA_WIDTH) + x;
+    volatile rgb_t* curr = row;
+    const rgb_t* bmp_row = bmp;
+    const rgb_t* bmp_curr = bmp_row;
+    for (int32_t _y=0; _y<h; _y++) {
+        for (int32_t _sy=0; _sy<scale; _sy++) {
+            for (int32_t _x=0; _x<w; _x++) {
+                for (int32_t _sx=0; _sx<scale; _sx++) {
+                    *curr = *bmp_curr;
+                    curr++;
+                }
+                bmp_curr++;
+            }
+            row = row + VGA_WIDTH;
+            curr = row;
+            bmp_curr = bmp_row;
+        }
+        bmp_row = bmp_row + w;
+        bmp_curr = bmp_row;
+    }
+}
+
 void vga_fill_screen(rgb_t color) {
     volatile rgb_t* curr = VGA_FRAME_BUFF;
     for (uint32_t i=0; i<VGA_WIDTH*VGA_HEIGHT; i++) {

@@ -16,30 +16,30 @@ class fifo {
             count = 0;
         }
 
-        uint32_t get_count() { return count; }
-        bool is_empty() { return count == 0; }
-        bool is_full() { return count == SIZE; }
+        inline uint32_t get_count() { return count; }
+        inline bool is_empty() { return count == 0; }
+        inline bool is_full() { return count == SIZE; }
 
-        void clear() {
+        inline void clear() {
             front = arr;
             back  = arr;
             count = 0;
         }
 
-        void insert(T item) {
+        inline void insert(T item) {
             *front = item;
             front++;
             count++;
         }
 
-        T remove() {
+        inline T remove() {
             T item = *back;
             back++;
             count--;
             return item;
         }
 
-        T peek() {
+        inline T peek() {
             return *back;
         }
 
