@@ -67,7 +67,7 @@ GDB     = $(RISCV_PREFIX)gdb
 C_STD = c11
 CPP_STD = c++17
 # Main compiler opts
-CC_OPTS  = -march=$(MARCH) -mabi=$(MABI) -ffunction-sections -fdata-sections -fno-common -Wl,--gc-sections -nostartfiles
+CC_OPTS  = -march=$(MARCH) -mabi=$(MABI) -ffunction-sections -fdata-sections -Wl,--gc-sections -nostartfiles
 CC_OPTS += -Os -mstrict-align -mbranch-cost=0
 # Compiler warning flags
 CC_OPTS += -Wall -Wshadow -Wdouble-promotion -Wformat-overflow -Wformat-truncation -Wundef -fno-common -Wconversion
@@ -77,7 +77,7 @@ CC_OPTS += -Wall -Wshadow -Wdouble-promotion -Wformat-overflow -Wformat-truncati
 LS_LIBS = -lm -lc -lgcc
 # Disassemble opts
 # DUMP_OPTS ?= --visualize-jumps -Mnumeric,no-aliases
-DUMP_OPTS ?= -D --disassemble-zeroes --visualize-jumps -Mno-aliases 
+DUMP_OPTS ?= -D -C --disassemble-zeroes --visualize-jumps -Mno-aliases 
 
 
 # Macros

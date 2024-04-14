@@ -31,7 +31,7 @@ SECTIONS
 
         /* Constructor/destructor pointer array */
         PROVIDE_HIDDEN(__init_array_start = .);
-        KEEP(*(.preinit_arra))
+        KEEP(*(.preinit_array))
         KEEP(*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
         KEEP(*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
         PROVIDE_HIDDEN(__init_array_end = .);
@@ -52,7 +52,7 @@ SECTIONS
 
     .rodata : ALIGN(4)
     {
-        *(.rodata)
+        *(.rodata .rodata.*)
         /* finish section on word boundary */
         . = ALIGN(4);
     } > rom
@@ -60,7 +60,8 @@ SECTIONS
     .bss (NOLOAD) : ALIGN(4)
     {
         __bss_start = .;
-        *(.bss)
+        *(.bss .bss.*)
+        *(.sbss .sbss.*)
         /* finish section on word boundary */
         . = ALIGN(4);
         __bss_end = .;
@@ -69,7 +70,8 @@ SECTIONS
     .data : ALIGN(4)
     {
         __data_start = .;
-        *(.data)
+        *(.data .data.*)
+        *(.sdata .sdata.*)
         /* finish section on word boundary */
         . = ALIGN(4);
         __data_end = .;
