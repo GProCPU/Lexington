@@ -5,7 +5,7 @@
 //depend core/*.sv
 //depend mem/*.sv
 //depend axi4_lite_manager.sv
-//depend axi4_lite_crossbar4.sv
+//depend axi4_lite_crossbar8.sv
 //depend peripheral/*.sv
 `timescale 1ns/1ps
 
@@ -94,8 +94,9 @@ module Basys3 (
 
 
     soc #(
+        .CLK_FREQ(10_000_000),
         .UART0_BAUD(9600),
-        .UART0_FIFO_DEPTH(8)
+        .UART0_FIFO_DEPTH(16)
     ) SOC (
         .clk(core_clk),
         .pxclk,

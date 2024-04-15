@@ -25,29 +25,45 @@ module fifo #(
     logic [$clog2(DEPTH)-1:0] head;
     logic [$clog2(DEPTH)-1:0] tail;
     logic _wr_en;
+    logic _rd_en;
 
-    generate if (FIRST_WORD_FALLTHROUGH) begin
-        assign dout = ram[head];
-    end endgenerate
+    generate
+        if (FIRST_WORD_FALLTHROUGH) begin
+            assign dout = ram[head];
+        end
+        else begin
+            always_ff @(posedge clk) begin
+                if (!rst_n) begin
+                    dout <= 0;
+                end
+                else begin
+                    if (_rd_en) begin
+                        dout <= ram[head];
+                    end
+                end
+            end
+        end
+    endgenerate
+
+
     assign full = (!empty) && (head == tail);
     assign _wr_en = wr_en && !full;
+    assign _rd_en = rd_en && !empty;
 
 
     always_ff @(posedge clk) begin
-        if (rst_n) begin
+        if (!rst_n) begin
             head = 0;
             tail = 0;
             empty = 1;
         end
         else begin
-            if (_wr_en && !full) begin
+            if (_wr_en) begin
                 ram[tail] <= din;
                 tail <= (tail < DEPTH-1) ? tail+1 : 0;
+                empty <= 0;
             end
-            if (rd_en && !empty) begin
-                if (!FIRST_WORD_FALLTHROUGH) begin
-                    dout <= ram[head];
-                end
+            if (_rd_en) begin
                 head <= (head < DEPTH-1) ? head+1 : 0;
                 if (head < DEPTH-1) begin
                     head <= head + 1;

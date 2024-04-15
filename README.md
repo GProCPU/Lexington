@@ -31,13 +31,14 @@ The GPro 2 (Saratoga) is currently in early development. The current status can 
 
 ## Project Status
 
-| Component | Docs | Sim | FPGA |
-| --- | --- | --- | --- |
-| Core  | ![](https://img.shields.io/badge/complete-g)      | ![](https://img.shields.io/badge/passing-g)       | ![](https://img.shields.io/badge/passing-g)
-| AXI   | ![](https://img.shields.io/badge/complete-g)      | ![](https://img.shields.io/badge/passing-g)       | ![](https://img.shields.io/badge/passing-g)
-| GPIO  | ![](https://img.shields.io/badge/complete-g)      | ![](https://img.shields.io/badge/passing-g)       | ![](https://img.shields.io/badge/passing-g)
-| Timers| ![](https://img.shields.io/badge/complete-g)  | ![](https://img.shields.io/badge/untested-orange) | ![](https://img.shields.io/badge/untested-orange)
-| UART  | ![](https://img.shields.io/badge/complete-g)    | ![](https://img.shields.io/badge/untested-orange)    | ![](https://img.shields.io/badge/untested-orange)
+| Component | Docs | Sim | FPGA | Software |
+| --- | --- | --- | --- | --- |
+| Core  | ![](https://img.shields.io/badge/complete-g)      | ![](https://img.shields.io/badge/passing-g)       | ![](https://img.shields.io/badge/passing-g)       | ![](https://img.shields.io/badge/passing-g)
+| AXI   | ![](https://img.shields.io/badge/complete-g)      | ![](https://img.shields.io/badge/passing-g)       | ![](https://img.shields.io/badge/passing-g)       | ![](https://img.shields.io/badge/N/A-gray)
+| GPIO  | ![](https://img.shields.io/badge/complete-g)      | ![](https://img.shields.io/badge/passing-g)       | ![](https://img.shields.io/badge/passing-g)       | ![](https://img.shields.io/badge/passing-g)
+| UART  | ![](https://img.shields.io/badge/outdated-yellow)    | ![](https://img.shields.io/badge/passing-g)    | ![](https://img.shields.io/badge/untested-orange) | ![](https://img.shields.io/badge/untested-orange)
+| VGA   | ![](https://img.shields.io/badge/missing-red)     | ![](https://img.shields.io/badge/passing-g)       | ![](https://img.shields.io/badge/passing-g)       | ![](https://img.shields.io/badge/development-blue)
+| Timers| ![](https://img.shields.io/badge/complete-g)  | ![](https://img.shields.io/badge/missing-red) | ![](https://img.shields.io/badge/missing-red) | ![](https://img.shields.io/badge/missing-red)
 
 ## Design and Microarchitecture
 

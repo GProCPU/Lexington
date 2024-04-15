@@ -1,10 +1,10 @@
 # UART Transceiver
 
-This is a memory-mapped, full-duplex UART transceiver with FIFOs and interrupt support for both transmit and receive.
-The BAUD rate is static at runtime, but can be configured at compile time with a default of 9600.
-This implementation uses the following parameters:
+This is a memory-mapped, full-duplex UART transceiver with FIFOs and interrupt
+support for both transmit and receive. The BAUD rate is runtime configurable and
+defaults to 9600. This implementation uses the following parameters:
 
-- BAUD: 9600
+- BAUD: 9600 (default)
 - Data bits: 8
 - Stop bits: 1
 - Parity: none
@@ -15,45 +15,25 @@ This implementation uses the following parameters:
 ### Parameters
 
 - **`WIDTH = 32`** bus width
-- **`BUS_CLK = 40_000_000`** bus clock frequency in Hz
+- **`BUS_CLK = 10_000_000`** bus clock frequency in Hz
 - **`BAUD = 9600`** baud rate
 - **`FIFO_DEPTH = 8`** FIFO depth for both TX and RX (depth 0 is invalid)
 
 ### Inputs
 
 - **`rx`** UART RX signal
-- **`dbg_en`** Enable override access by debugger
-- **`dbg_send`** Debugger send flag
-- **`dbg_dout [7:0]`** Debugger TX data (bypasses FIFO)
 - **`axi_s`** AXI subordinate interface
 
 ### Outputs
 
 - **`tx`** UART TX signal
-- **`dbg_recv`** Debugger receive flag
-- **`dbg_din [7:0]`** Debugger RX data (bypasses FIFO)
-- **`dbg_rx_busy`** RX busy flag for debugger
-- **`dbg_tx_busy`** TX busy flag for debugger
 - **`rx_int`** receive interrupt
 - **`tx_int`** transmit interrupt
 
 ## Behavior
 
-The module includes a dedicated interface for a hardware debugger.
-When `dbg_en` is asserted, the debugger is directly connected to the RX and TX submodules bypassing the FIFOs.
-When not asserted, transmit data is read from the TX FIFO and received data is written to the RX FIFO.
-The interrupts `rx_int` and `tx_int` are disabled when `dbg_en` is asserted.
-
-The submodules retain their current state when `dbg_en` is asserted.
-If debug is asserted while the RX submodule is busy receiving, then the received data will be intercepted by the debugger.
-If debug is asserted while the TX submodule is busy transmitting, then the transmission of the data byte from the FIFO continues as normal.
-The transceiver submodules are unaware of the debugger override behavior.
-All data and control signal multiplexing occurs at the top level UART module.
-
-Note that all `dbg_` output signals are always connected to the submodules.
-The hardware debugger can use this to *spy* on incoming data for example.
-
-The memory-mapped registers shown in Table 1 control the behavior of the UART transceiver and interrupt signals.
+The memory-mapped registers shown in Table 1 control the behavior of the UART
+transceiver and interrupt signals.
 
 **Table 1.** Memory-Mapped Registers
 
@@ -71,7 +51,8 @@ A write to this register inserts data into the TX FIFO.
 If the TX FIFO is full, the new write data is discarded.
 A read from this register removes data from the RX FIFO.
 If the RX FIFO is empty, `0x00` is read.
-Additionally, if new RX data is received and the RX FIFO is full, the new data will be discarded.
+Additionally, if new RX data is received and the RX FIFO is full, the new data
+will be discarded.
 
 ![uartx_data register](../figures/UART_data_register.drawio.png) \
 **Figure 1.** Data register
@@ -99,10 +80,9 @@ Table 2 contains detailed information about each field.
 | 5 | 1 | 1 | ro | `tx_empty`   | Asserted when the RX FIFO is empty
 | 8:6 | 3 | 0 | r/w | `rx_int`  | RX interrupt configuration (*see Table 3*)
 | 10:9 | 2 | 0 | r/w | `tx_int`  | TX interrupt configuration (*see Table 3*)
-| 28:11 | 20 | 0 | ro | *reserved* | read-only zero
-| 29 | 1 | 0 | ro | `dbg`       | Asserted when hardware debugger has override control
+| 29:11 | 20 | 0 | ro | *reserved* | read-only zero
 | 30 | 1 | 0 | ~~wo~~ ro | ~~`rst`~~       | ~~Writing a 1 to this bit resets the UART module. Reads always return zero.~~
-| 31 | 1 | 0 | ro | `rx_err`    | Sticky bit indicating an RX error. A read clears the bit
+| 31 | 1 | 0 | ro | `rx_err`    | Sticky bit indicating an RX error. A read clears this bit
 
 <br>
 
@@ -125,7 +105,9 @@ Alternately, the interrupt source can be disabled.
 | --- | --- |
 | 0 | RX/TX done interrupt
 | 1 | FIFO interrupt (RX full/TX empty)
-| 3 | RX error interrupt (`rx_int` only)
+| 2 | RX error interrupt (`rx_int` only)
+
+<br> <br>
 
 ## RX Submodule
 
@@ -172,6 +154,7 @@ The deserializer state machine is capable of detecting a start bit immediately f
 In this case, the `busy` signal is never lowered.
 If no chained transition is detected, the `busy` signal is lowered until a new start bit is detected.
 
+<br> <br>
 
 ## TX Submodule
 

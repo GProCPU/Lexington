@@ -26,9 +26,9 @@ package lexington;
     localparam DEFAULT_MTIME_BASE_ADDR  = 32'hC000_0000;    // see CSR documentation
     localparam DEFAULT_AXI_BASE_ADDR    = 32'hE000_0000;    // must be aligned to AXI address space
     localparam VGA_BASE_ADDR            = 32'hE000_0000;    // VGA
-    localparam TIM0_BASE_ADDR           = 32'hFFFF_FF0F;    // TIM0
-    localparam TIM1_BASE_ADDR           = 32'hFFFF_FF1F;    // TIM1
-    localparam UART0_BASE_ADDR          = 32'hFFFF_FF8F;    // UART0
+    localparam TIM0_BASE_ADDR           = 32'hFFFF_FF00;    // TIM0
+    localparam TIM1_BASE_ADDR           = 32'hFFFF_FF10;    // TIM1
+    localparam UART0_BASE_ADDR          = 32'hFFFF_FF80;    // UART0
     localparam GPIOA_BASE_ADDR          = 32'hFFFF_FFA0;    // GPIOA
     localparam GPIOB_BASE_ADDR          = 32'hFFFF_FFB0;    // GPIOB
     localparam GPIOC_BASE_ADDR          = 32'hFFFF_FFC0;    // GPIOC
