@@ -4,7 +4,7 @@
 //depend debug.sv
 //depend mem/*.sv
 //depend axi4_lite_manager.sv
-//depend axi4_lite_crossbar4.sv
+//depend axi4_lite_crossbar8.sv
 //depend peripheral/*.sv
 `timescale 1ns/1ps
 
@@ -15,6 +15,7 @@ import lexington::*;
 
 
 module soc #(
+        parameter CLK_FREQ              = DEFAULT_CLK_FREQ,             // Core/bus frequency
         parameter UART0_BAUD            = DEFAULT_UART_BAUD,            // UART BAUD rate
         parameter UART0_FIFO_DEPTH      = DEFAULT_UART_FIFO_DEPTH       // FIFO depth for both TX and RX (depth 0 is invalid)
     ) (
@@ -55,6 +56,7 @@ module soc #(
     logic [ROM_ADDR_WIDTH-1:0] rom_addr1;               // IBus
     rv32::word rom_rd_data1;                            // IBus
     logic rom_rd_en2;                                   // DBus
+    logic rom_wr_en2;                                   // DBus
     logic [ROM_ADDR_WIDTH-1:0] rom_addr2;               // DBus
     rv32::word rom_rd_data2;                            // DBus
     // RAM ports
@@ -87,8 +89,11 @@ module soc #(
     axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(GPIO_ADDR_WIDTH)) axi_gpioa();
     axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(GPIO_ADDR_WIDTH)) axi_gpiob();
     axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(GPIO_ADDR_WIDTH)) axi_gpioc();
-    // axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(UART_ADDR_WIDTH)) axi_uart0();
+    axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(UART_ADDR_WIDTH)) axi_uart0();
     axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(VGA_ADDR_WIDTH)) axi_vga();
+    axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(1)) axi_s05(); // unused
+    axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(1)) axi_s06(); // unused
+    axi4_lite #(.WIDTH(rv32::XLEN), .ADDR_WIDTH(1)) axi_s07(); // unused
     ////////////////////////////////////////////////////////////
     // END: Internal Wires
     ////////////////////////////////////////////////////////////
@@ -118,6 +123,7 @@ module soc #(
         .rom_addr1,
         .rom_rd_data1,
         .rom_rd_en2,
+        .rom_wr_en2,
         .rom_addr2,
         .rom_rd_data2,
         .ram_rd_en,
@@ -162,7 +168,10 @@ module soc #(
         .addr1(rom_addr1),
         .rd_data1(rom_rd_data1),
         .rd_en2(rom_rd_en2),
+        .wr_en2(rom_wr_en2),
         .addr2(rom_addr2),
+        .wr_data2(wr_data),
+        .wr_strobe2(wr_strobe),
         .rd_data2(rom_rd_data2)
     );
 
@@ -206,26 +215,32 @@ module soc #(
         .busy(axi_busy),
         .axi_m(axi_m.manager)
     );
-    axi4_lite_crossbar4 #(
+    axi4_lite_crossbar8 #(
         .WIDTH(rv32::XLEN),
         .ADDR_WIDTH(AXI_ADDR_WIDTH),
         .S00_ADDR_WIDTH(GPIO_ADDR_WIDTH),
         .S01_ADDR_WIDTH(GPIO_ADDR_WIDTH),
         .S02_ADDR_WIDTH(GPIO_ADDR_WIDTH),
-        // .S03_ADDR_WIDTH(UART_ADDR_WIDTH),
-        .S03_ADDR_WIDTH(VGA_ADDR_WIDTH),
+        .S03_ADDR_WIDTH(UART_ADDR_WIDTH),
+        .S04_ADDR_WIDTH(VGA_ADDR_WIDTH),
         .S00_BASE_ADDR(GPIOA_BASE_ADDR),
         .S01_BASE_ADDR(GPIOB_BASE_ADDR),
         .S02_BASE_ADDR(GPIOC_BASE_ADDR),
-        // .S03_BASE_ADDR(UART0_BASE_ADDR)
-        .S03_BASE_ADDR(VGA_BASE_ADDR)
+        .S03_BASE_ADDR(UART0_BASE_ADDR),
+        .S04_BASE_ADDR(VGA_BASE_ADDR),
+        .S05_ENABLE(0),
+        .S06_ENABLE(0),
+        .S07_ENABLE(0)
     ) CROSSBAR (
         .axi_m,
         .axi_s00(axi_gpioa),
         .axi_s01(axi_gpiob),
         .axi_s02(axi_gpioc),
-        // .axi_s03(axi_uart0)
-        .axi_s03(axi_vga)
+        .axi_s03(axi_uart0),
+        .axi_s04(axi_vga),
+        .axi_s05(axi_s05), // unused
+        .axi_s06(axi_s06), // unused
+        .axi_s07(axi_s07)  // unused
     );
     ////////////////////////////////////////////////////////////
     // END: AXI Manager & Crossbar Instantiation
@@ -266,28 +281,18 @@ module soc #(
         .int1(gpioc_int_1),
         .axi(axi_gpioc)
     );
-    // uart #(
-    //     .WIDTH(rv32::XLEN),
-    //     .BUS_CLK(CLK_FREQ),
-    //     .BAUD(UART0_BAUD),
-    //     .FIFO_DEPTH(UART0_FIFO_DEPTH)
-    // ) UART0 (
-    //     .rx(uart0_rx),
-    //     .tx(uart0_tx),
-    //     .rx_int(uart0_rx_int),
-    //     .tx_int(uart0_tx_int),
-    //     .dbg_en(0),
-    //     .dbg_send(),
-    //     .dbg_recv(),
-    //     .dbg_dout(),
-    //     .dbg_din(),
-    //     .dbg_rx_busy(),
-    //     .dbg_tx_busy(),
-    //     .axi(axi_uart0)
-    // );
-    assign uart0_tx = 0;
-    assign uart0_rx_int = 0;
-    assign uart0_tx_int = 0;
+    uart #(
+        .WIDTH(rv32::XLEN),
+        .BUS_CLK(CLK_FREQ),
+        .BAUD(UART0_BAUD),
+        .FIFO_DEPTH(UART0_FIFO_DEPTH)
+    ) UART0 (
+        .rx(uart0_rx),
+        .tx(uart0_tx),
+        .rx_int(uart0_rx_int),
+        .tx_int(uart0_tx_int),
+        .axi(axi_uart0)
+    );
     vga #(
         .H_LINE(VGA_H_LINE),
         .H_SYNC_PULSE(VGA_H_SYNC_PULSE),

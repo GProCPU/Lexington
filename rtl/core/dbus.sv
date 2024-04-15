@@ -32,6 +32,7 @@ module dbus #(
 
         output rv32::word rd_data,                                  // read data to LSU
         output logic rom_rd_en,                                     // read enable to ROM
+        output logic rom_wr_en,                                     // write enable to ROM (for reprogramming)
         output logic [ROM_ADDR_WIDTH-1:0] rom_addr,                 // *word-addressable* address to ROM
         output logic ram_rd_en,                                     // read enable to RAM
         output logic ram_wr_en,                                     // write enable to RAM
@@ -118,6 +119,7 @@ module dbus #(
         data_access_fault = 0;
         // default all rd/wr enable to 0
         rom_rd_en = 0;
+        rom_wr_en = 0;
         ram_rd_en = 0;
         ram_wr_en = 0;
         mtime_rd_en = 0;
@@ -127,14 +129,10 @@ module dbus #(
         _raw_rd_data = 0;
         if (!data_misaligned) begin
             if (is_rom_addr) begin
-                if (wr_en) begin // write permission prohibited
-                    data_access_fault = 1;
-                    _raw_rd_data = 'x;
-                end
-                else begin
-                    rom_rd_en = rd_en;
-                    _raw_rd_data = rom_rd_data;
-                end
+                // Not actually ROM, so write is permitted for reprogramming
+                rom_rd_en = rd_en;
+                rom_wr_en = wr_en;
+                _raw_rd_data = rom_rd_data;
             end
             else if (is_ram_addr) begin
                 ram_rd_en = rd_en;

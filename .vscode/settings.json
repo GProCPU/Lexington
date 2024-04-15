@@ -20,6 +20,8 @@
         "BGEU",
         "bitmask",
         "BLTU",
+        "bootloader",
+        "bootsel",
         "BRAM",
         "BREADY",
         "BRESP",

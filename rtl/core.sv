@@ -27,6 +27,7 @@ module core #(
         output logic [ROM_ADDR_WIDTH-1:0] rom_addr1,                // IBus
         input  rv32::word rom_rd_data1,                             // IBus
         output logic rom_rd_en2,                                    // DBus
+        output logic rom_wr_en2,                                    // DBus
         output logic [ROM_ADDR_WIDTH-1:0] rom_addr2,                // DBus
         input  rv32::word rom_rd_data2,                             // DBus
 
@@ -180,6 +181,7 @@ module core #(
         .axi_busy,
         .rd_data(dbus_rd_data),
         .rom_rd_en(rom_rd_en2),
+        .rom_wr_en(rom_wr_en2),
         .rom_addr(rom_addr2),
         .ram_rd_en,
         .ram_wr_en,

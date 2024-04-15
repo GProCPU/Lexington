@@ -1,5 +1,5 @@
-#ifndef __TIME_H
-#define __TIME_H
+#ifndef __MTIME_H
+#define __MTIME_H
 
 #include <stdint.h>
 
@@ -46,22 +46,12 @@ void delay(uint32_t val);
 // void delay_micro(uint32_t val);
 
 
-// inline methods
-void set_mtime(uint64_t val);
-void set_mtimecmp(uint64_t val);
-uint64_t get_mtime();
-uint64_t get_mtimecmp();
-
-uint32_t millis();
-uint32_t milliseconds();
-uint32_t microseconds();
-
 extern volatile uint32_t __millis;
 
 
 
 
-inline void __attribute__((always_inline)) set_mtime(uint64_t val) {
+static inline void __attribute__((always_inline)) set_mtime(uint64_t val) {
     union {
         uint64_t u64;
         uint32_t u32[2];
@@ -73,7 +63,7 @@ inline void __attribute__((always_inline)) set_mtime(uint64_t val) {
     MACHINE_TIMER->mtime  = counter.u32[0];
 }
 
-inline void __attribute__((always_inline)) set_mtimecmp(uint64_t val) {
+static inline void __attribute__((always_inline)) set_mtimecmp(uint64_t val) {
     union {
         uint64_t u64;
         uint32_t u32[2];
@@ -84,7 +74,7 @@ inline void __attribute__((always_inline)) set_mtimecmp(uint64_t val) {
     MACHINE_TIMER->mtimecmp  = counter.u32[0];
 }
 
-inline uint64_t __attribute__((always_inline)) get_mtime() {
+static inline uint64_t __attribute__((always_inline)) get_mtime() {
     union {
         uint64_t u64;
         uint32_t u32[2];
@@ -99,7 +89,7 @@ inline uint64_t __attribute__((always_inline)) get_mtime() {
     return counter.u64;
 }
 
-inline uint64_t __attribute__((always_inline)) get_mtimecmp() {
+static inline uint64_t __attribute__((always_inline)) get_mtimecmp() {
     union {
         uint64_t u64;
         uint32_t u32[2];
@@ -111,15 +101,15 @@ inline uint64_t __attribute__((always_inline)) get_mtimecmp() {
 }
 
 
-inline uint32_t __attribute__((always_inline)) millis() {
+static inline uint32_t __attribute__((always_inline)) millis() {
     return __millis;
 }
 
-inline uint32_t __attribute__((always_inline)) milliseconds() {
+static inline uint32_t __attribute__((always_inline)) milliseconds() {
     return __millis;
 }
 
-inline uint32_t __attribute__((always_inline)) microseconds() {
+static inline uint32_t __attribute__((always_inline)) microseconds() {
     return csrr(CSR_TIME);
 }
 
@@ -127,4 +117,4 @@ inline uint32_t __attribute__((always_inline)) microseconds() {
 } // extern "C"
 #endif
 
-#endif // __TIME_H
+#endif // __MTIME_H

@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 
-inline uint32_t __attribute__ ((always_inline)) csrrw(const uint32_t csr, uint32_t data) {
+static inline uint32_t __attribute__ ((always_inline)) csrrw(const uint32_t csr, uint32_t data) {
     uint32_t result;
     __asm__ volatile inline (
         "csrrw %[result], %[csr], %[data]"
@@ -46,7 +46,7 @@ inline uint32_t __attribute__ ((always_inline)) csrrw(const uint32_t csr, uint32
     return result;
 }
 
-inline uint32_t __attribute__ ((always_inline)) csrrs(const uint32_t csr, uint32_t mask) {
+static inline uint32_t __attribute__ ((always_inline)) csrrs(const uint32_t csr, uint32_t mask) {
     uint32_t result;
     __asm__ volatile inline (
         "csrrs %[result], %[csr], %[mask]"
@@ -56,7 +56,7 @@ inline uint32_t __attribute__ ((always_inline)) csrrs(const uint32_t csr, uint32
     return result;
 }
 
-inline uint32_t __attribute__ ((always_inline)) csrrc(const uint32_t csr, uint32_t mask) {
+static inline uint32_t __attribute__ ((always_inline)) csrrc(const uint32_t csr, uint32_t mask) {
     uint32_t result;
     __asm__ volatile inline (
         "csrrc %[result], %[csr], %[mask]"
@@ -67,7 +67,7 @@ inline uint32_t __attribute__ ((always_inline)) csrrc(const uint32_t csr, uint32
 }
 
 
-inline void __attribute__ ((always_inline)) csrw(const uint32_t csr, uint32_t data) {
+static inline void __attribute__ ((always_inline)) csrw(const uint32_t csr, uint32_t data) {
     __asm__ volatile inline (
         "csrw %[csr], %[data]"
         : 
@@ -75,7 +75,7 @@ inline void __attribute__ ((always_inline)) csrw(const uint32_t csr, uint32_t da
     );
 }
 
-inline void __attribute__ ((always_inline)) csrs(const uint32_t csr, uint32_t mask) {
+static inline void __attribute__ ((always_inline)) csrs(const uint32_t csr, uint32_t mask) {
     __asm__ volatile inline (
         "csrs %[csr], %[mask]"
         : 
@@ -83,7 +83,7 @@ inline void __attribute__ ((always_inline)) csrs(const uint32_t csr, uint32_t ma
     );
 }
 
-inline void __attribute__ ((always_inline)) csrc(const uint32_t csr, uint32_t mask) {
+static inline void __attribute__ ((always_inline)) csrc(const uint32_t csr, uint32_t mask) {
     __asm__ volatile inline (
         "csrc %[csr], %[mask]"
         : 
@@ -92,7 +92,7 @@ inline void __attribute__ ((always_inline)) csrc(const uint32_t csr, uint32_t ma
 }
 
 
-inline uint32_t __attribute__ ((always_inline)) csrr(const uint32_t csr) {
+static inline uint32_t __attribute__ ((always_inline)) csrr(const uint32_t csr) {
     uint32_t result;
     __asm__ volatile inline (
         "csrr   %[result], %[csr]"
@@ -103,7 +103,7 @@ inline uint32_t __attribute__ ((always_inline)) csrr(const uint32_t csr) {
 }
 
 
-inline uint32_t __attribute__ ((always_inline)) csr_swap(const uint32_t csr, uint32_t data) {
+static inline uint32_t __attribute__ ((always_inline)) csr_swap(const uint32_t csr, uint32_t data) {
     __asm__ volatile inline (
         "csrrw  %[result], %[csr], %[data]"
         : [result] "+r" (data)

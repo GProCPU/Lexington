@@ -35,6 +35,7 @@ module soc_TB;
 
     // Instantiate DUT
     soc #(
+        .CLK_FREQ(10_000_000),
         .UART0_BAUD(UART0_BAUD),
         .UART0_FIFO_DEPTH(UART0_FIFO_DEPTH)
     ) DUT (

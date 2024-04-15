@@ -25,25 +25,25 @@ extern "C" {
 
 // Endianness
 #define MSTATUSH_MBE        5
-inline uint32_t __attribute__((always_inline)) get_endianness()
+static inline uint32_t __attribute__((always_inline)) get_endianness()
     { return 0b1 & (csrr(CSR_MSTATUSH) >> MSTATUSH_MBE); }
-inline void __attribute__((always_inline)) set_big_endian() 
+static inline void __attribute__((always_inline)) set_big_endian() 
     { __asm__ volatile inline ("csrsi mstatush, 0x20"); }
-inline void __attribute__((always_inline)) set_little_endian() 
+static inline void __attribute__((always_inline)) set_little_endian() 
     { __asm__ volatile inline ("csrci mstatush, 0x20"); }
 
 // Memory Fence
-inline void __attribute__((always_inline)) fence() 
+static inline void __attribute__((always_inline)) fence() 
     { __asm__ volatile inline ("fence"); }
-inline void __attribute__((always_inline)) fence_i() 
+static inline void __attribute__((always_inline)) fence_i() 
     { __asm__ volatile inline ("fence.i"); }
 
 // System Instructions
-inline void __attribute__((always_inline)) ecall() 
+static inline void __attribute__((always_inline)) ecall() 
     { __asm__ volatile inline ("ecall"); }
-inline void __attribute__((always_inline)) ebreak() 
+static inline void __attribute__((always_inline)) ebreak() 
     { __asm__ volatile inline ("ebreak"); }
-inline void __attribute__((always_inline)) wfi() 
+static inline void __attribute__((always_inline)) wfi() 
     { __asm__ volatile inline ("wfi"); }
 
 
