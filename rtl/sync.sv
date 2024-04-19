@@ -17,7 +17,7 @@ module sync #(
     assign dout = flops[STAGES-1];
 
     initial begin
-        flops = {STAGES{RESET_VALUE}};
+        flops <= {STAGES{RESET_VALUE}};
     end
     always_ff @(posedge dest_clk) begin
         if (!rst_n) begin

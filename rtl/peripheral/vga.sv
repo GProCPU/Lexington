@@ -65,23 +65,22 @@ module vga #(
     enum {V_BLANK, H_BLANK, VISIBLE} state;
 
     // Delay sync signals
-    localparam DELAY_STAGES = 2;
-    sync #(
-        .STAGES(DELAY_STAGES)
-    ) HSYNC_DELAY (
-        .dest_clk(pxclk),
-        .rst_n,
-        .din(hsync_wire),
-        .dout(hsync)
-    );
-    sync #(
-        .STAGES(DELAY_STAGES)
-    ) VSYNC_DELAY (
-        .dest_clk(pxclk),
-        .rst_n,
-        .din(vsync_wire),
-        .dout(vsync)
-    );
+    logic hsync_delay, vsync_delay;
+    always_ff @(posedge pxclk) begin
+        if (!rst_n) begin
+            hsync       <= 0;
+            vsync       <= 0;
+            hsync_delay <= 0;
+            vsync_delay <= 0;
+        end
+        else begin
+            hsync       <= hsync_delay;
+            vsync       <= vsync_delay;
+            hsync_delay <= hsync_wire;
+            vsync_delay <= vsync_wire;
+        end
+    end
+
 
     // Register rgb output
     always_ff @(posedge pxclk) begin

@@ -6,6 +6,8 @@ ENTRY(_start)
 
 __Lexington_rom_size = 8K;
 __Lexington_ram_size = 8K;
+PROVIDE(__Lexington_rom_size            = __Lexington_rom_size);
+PROVIDE(__Lexington_ram_size            = __Lexington_ram_size);
 
 __Lexington_rom_base = 0x00000000;
 __Lexington_ram_base = 0x40000000;
@@ -27,6 +29,10 @@ SECTIONS
     {
 
         KEEP(*(.text.startup)); /* keep start-up code at beginning of ROM */
+        KEEP(*(.text.bootloader)); /* keep bootloader right after startup */
+
+        . = ALIGN(4);
+        PROVIDE(__Lexington_bootloader_end = .);
         *(.text .text.*)
 
         /* Constructor/destructor pointer array */
@@ -53,6 +59,7 @@ SECTIONS
     .rodata : ALIGN(4)
     {
         *(.rodata .rodata.*)
+        *(.srodata .srodata.*)
         /* finish section on word boundary */
         . = ALIGN(4);
     } > rom

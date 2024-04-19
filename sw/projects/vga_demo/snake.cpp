@@ -1,16 +1,17 @@
 #include "snake.h"
+#include "unistd.h"
 
 
 Snake::state_t Snake::state;
 Snake::xyd_t Snake::head;
 int32_t Snake::next_dir;
 fifo<Snake::xyd_t, Snake::MAX_SIZE> Snake::body;
-int32_t Snake::step_period; // delay between steps in milliseconds (inverse speed)
-int32_t Snake::prev_step_millis;
-int32_t Snake::prev_btn_press_millis;
+uint32_t Snake::step_period; // delay between steps in milliseconds (inverse speed)
+uint32_t Snake::prev_step_millis;
+uint32_t Snake::prev_btn_press_millis;
 Snake::xy_t Snake::food;
 Snake::xy_t Snake::bug;
-int32_t Snake::bug_points;
+uint32_t Snake::bug_points;
 
 
 void Snake::init() {
@@ -62,37 +63,30 @@ void Snake::init_level(int32_t id) {
     xyd_t curr = head;
 
     // tail
-    // curr.x -= 2 * SCALED_TILE_SIZE;
-    // body.insert(curr);
-    // vga_draw_bitmap<0, false, false>(
-    //     curr.x, curr.y,
-    //     SNAKE_TAIL_BMP,
-    //     TILE_SIZE, TILE_SIZE,
-    //     TILE_SCALAR
-    // );
+    curr.x -= 2 * SCALED_TILE_SIZE;
+    body.insert(curr);
+    vga_draw_bitmap<0, false, false>(
+        curr.x, curr.y,
+        SNAKE_TAIL_BMP,
+        TILE_SIZE, TILE_SIZE,
+        TILE_SCALAR
+    );
 
     // body
-    // curr.x += SCALED_TILE_SIZE;
-    // body.insert(curr);
-    // vga_draw_bitmap<0, false, false>(
-    //     curr.x, curr.y,
-    //     SNAKE_BODY_BMP,
-    //     TILE_SIZE, TILE_SIZE,
-    //     TILE_SCALAR
-    // );
+    curr.x += SCALED_TILE_SIZE;
+    body.insert(curr);
+    vga_draw_bitmap<0, false, false>(
+        curr.x, curr.y,
+        SNAKE_BODY_BMP,
+        TILE_SIZE, TILE_SIZE,
+        TILE_SCALAR
+    );
 
     // head
-    // body.insert(head);
-    // vga_draw_bitmap<0, false, false>(
-    //     head.x, head.y,
-    //     SNAKE_HEAD_BMP,
-    //     TILE_SIZE, TILE_SIZE,
-    //     TILE_SCALAR
-    // );
-
+    body.insert(head);
     vga_draw_bitmap<0, false, false>(
         head.x, head.y,
-        ARROW_BMP,
+        SNAKE_HEAD_BMP,
         TILE_SIZE, TILE_SIZE,
         TILE_SCALAR
     );
@@ -160,107 +154,102 @@ void Snake::run() {
     if (curr_millis >= prev_step_millis + step_period) {
         prev_step_millis = curr_millis;
 
-        // DEBUG: Erase
-        vga_fill_rect(
-            head.x-1, head.y-1,
-            SCALED_TILE_SIZE+2, SCALED_TILE_SIZE+2,
-            VGA_CYAN
-        );
 
         void (*_draw_bitmap) (int32_t, int32_t, const rgb_t*, int32_t, int32_t, int32_t);
-        // // Erase old tail
-        // vga_fill_rect(
-        //     body.peek().x, body.remove().y,
-        //     SCALED_TILE_SIZE, SCALED_TILE_SIZE,
-        //     BG_COLOR
-        // );
-        // // Draw new tail
-        // switch (body.peek().dir) {
-        //     case UP:    _draw_bitmap = vga_draw_bitmap<UP, false, false>; break;
-        //     case RIGHT: _draw_bitmap = vga_draw_bitmap<RIGHT, false, false>; break;
-        //     case DOWN:  _draw_bitmap = vga_draw_bitmap<DOWN, false, true>; break;
-        //     case LEFT:  _draw_bitmap = vga_draw_bitmap<LEFT, false, true>; break;
-        //     default:    return; // error
-        // }
-        // _draw_bitmap(
-        //     body.peek().dir, body.peek().dir,
-        //     SNAKE_TAIL_BMP,
-        //     TILE_SIZE, TILE_SIZE,
-        //     TILE_SCALAR
-        // );
-        // // Replace current head with body
-        // if (next_dir == head.dir) {
-        //     // Straight
-        //     switch (head.dir) {
-        //         case UP:    _draw_bitmap = vga_draw_bitmap<UP, false, false>; break;
-        //         case RIGHT: _draw_bitmap = vga_draw_bitmap<RIGHT, false, false>; break;
-        //         case DOWN:  _draw_bitmap = vga_draw_bitmap<DOWN, false, true>; break;
-        //         case LEFT:  _draw_bitmap = vga_draw_bitmap<LEFT, false, true>; break;
-        //         default:    return; // error
-        //     }
-        //     _draw_bitmap(
-        //         head.x, head.y,
-        //         SNAKE_BODY_BMP,
-        //         TILE_SIZE, TILE_SIZE,
-        //         TILE_SCALAR
-        //     );
-        // } else {
-        //     // Turn
-        //     int32_t angle = head.dir + next_dir;
-        //     if (angle >= 360) {
-        //         angle -= 360;
-        //     }
-        //     if (angle == (RIGHT + UP)) {
-        //         _draw_bitmap = vga_draw_bitmap<RIGHT, false, false>;
-        //     } else {
-        //         _draw_bitmap = vga_draw_bitmap<UP, false, false>;
-        //     }
-        //     _draw_bitmap(
-        //         head.x, head.x,
-        //         SNAKE_BODY_TURN_BMP,
-        //         TILE_SIZE, TILE_SIZE,
-        //         TILE_SCALAR
-        //     );
-        // }
-        // // Draw new head
+        // Erase old tail
+        vga_fill_rect(
+            body.peek().x, body.peek().y,
+            SCALED_TILE_SIZE, SCALED_TILE_SIZE,
+            BG_COLOR
+        );
+        body.remove();
+        // Draw new tail
+        switch (body.peek().dir) {
+            case UP:    _draw_bitmap = vga_draw_bitmap<UP, false, false>; break;
+            case RIGHT: _draw_bitmap = vga_draw_bitmap<RIGHT, false, false>; break;
+            case DOWN:  _draw_bitmap = vga_draw_bitmap<DOWN, false, true>; break;
+            case LEFT:  _draw_bitmap = vga_draw_bitmap<LEFT, false, true>; break;
+            default:    return; // error
+        }
+        _draw_bitmap(
+            body.peek().dir, body.peek().dir,
+            SNAKE_TAIL_BMP,
+            TILE_SIZE, TILE_SIZE,
+            TILE_SCALAR
+        );
+        // Replace current head with body
+        if (next_dir == head.dir) {
+            // Straight
+            switch (head.dir) {
+                case UP:    _draw_bitmap = vga_draw_bitmap<UP, false, false>; break;
+                case RIGHT: _draw_bitmap = vga_draw_bitmap<RIGHT, false, false>; break;
+                case DOWN:  _draw_bitmap = vga_draw_bitmap<DOWN, false, true>; break;
+                case LEFT:  _draw_bitmap = vga_draw_bitmap<LEFT, false, true>; break;
+                default:    return; // error
+            }
+            _draw_bitmap(
+                head.x, head.y,
+                SNAKE_BODY_BMP,
+                TILE_SIZE, TILE_SIZE,
+                TILE_SCALAR
+            );
+        } else {
+            // Turn
+            int32_t angle = head.dir + next_dir;
+            if (angle >= 360) {
+                angle -= 360;
+            }
+            if (angle == (RIGHT + UP)) {
+                _draw_bitmap = vga_draw_bitmap<RIGHT, false, false>;
+            } else {
+                _draw_bitmap = vga_draw_bitmap<UP, false, false>;
+            }
+            _draw_bitmap(
+                head.x, head.x,
+                SNAKE_BODY_TURN_BMP,
+                TILE_SIZE, TILE_SIZE,
+                TILE_SCALAR
+            );
+        }
+        // Draw new head
         head.dir = next_dir;
-        // int32_t tmp;
-        // switch (head.dir) {
-        //     case UP:
-        //         tmp = head.y - SCALED_TILE_SIZE;
-        //         if (tmp < Y_MIN) {
-        //             // game over
-        //             return;
-        //         }
-        //         head.y = tmp;
-        //         break;
-        //     case RIGHT:
-        //         tmp = head.x + SCALED_TILE_SIZE;
-        //         if (tmp > X_MAX) {
-        //             // game over
-        //             return;
-        //         }
-        //         head.x = tmp;
-        //         break;
-        //     case DOWN:
-        //         tmp = head.y + SCALED_TILE_SIZE;
-        //         if (tmp > Y_MAX) {
-        //             // game over
-        //             return;
-        //         }
-        //         head.y = tmp;
-        //         break;
-        //     case LEFT:
-        //         tmp = head.x - SCALED_TILE_SIZE;
-        //         if (tmp < X_MIN) {
-        //             // game over
-        //             return;
-        //         }
-        //         head.x = tmp;
-        //         break;
-        //     default:
-        //         return; // error
-        // }
+        int32_t tmp;
+        switch (head.dir) {
+            case UP:
+                tmp = head.y - SCALED_TILE_SIZE;
+                if (tmp < Y_MIN) {
+                    // game over
+                    return;
+                }
+                head.y = tmp;
+                break;
+            case RIGHT:
+                tmp = head.x + SCALED_TILE_SIZE;
+                if (tmp > X_MAX) {
+                    // game over
+                    return;
+                }
+                head.x = tmp;
+                break;
+            case DOWN:
+                tmp = head.y + SCALED_TILE_SIZE;
+                if (tmp > Y_MAX) {
+                    // game over
+                    return;
+                }
+                head.y = tmp;
+                break;
+            case LEFT:
+                tmp = head.x - SCALED_TILE_SIZE;
+                if (tmp < X_MIN) {
+                    // game over
+                    return;
+                }
+                head.x = tmp;
+                break;
+            default:
+                return; // error
+        }
         switch (head.dir) {
             case UP:    _draw_bitmap = vga_draw_bitmap<UP, false, false>; break;
             case RIGHT: _draw_bitmap = vga_draw_bitmap<RIGHT, false, false>; break;
@@ -268,22 +257,27 @@ void Snake::run() {
             case LEFT:  _draw_bitmap = vga_draw_bitmap<LEFT, false, true>; break;
             default:    return; // error
         }
-        // _draw_bitmap(
-        //     head.x, head.y,
-        //     SNAKE_HEAD_BMP,
-        //     TILE_SIZE, TILE_SIZE,
-        //     TILE_SCALAR
-        // );
-        // body.insert(head);
-
-        // DEBUG: re-draw
         _draw_bitmap(
             head.x, head.y,
-            ARROW_BMP,
+            SNAKE_HEAD_BMP,
             TILE_SIZE, TILE_SIZE,
             TILE_SCALAR
         );
-        state = PAUSE;
+        body.insert(head);
+
+        // DEBUG: draw-arrow
+        // _draw_bitmap(
+        //     head.x, head.y,
+        //     ARROW_BMP,
+        //     TILE_SIZE, TILE_SIZE,
+        //     TILE_SCALAR
+        // );
+        // state = PAUSE;
+        // print("X=");
+        // print_int32(head.x, 10);
+        // print(" Y=");
+        // print_int32(head.y, 10);
+        // println("");
     }
 }
 

@@ -28,6 +28,8 @@ LEXINGTON_SRC_PATH = $(LEXINGTON_HOME)/sw/lib/src
 CORE_SRC  = $(wildcard $(LEXINGTON_SRC_PATH)/*.c) $(wildcard $(LEXINGTON_SRC_PATH)/*.cpp)
 # Start-up code
 CORE_SRC += $(LEXINGTON_COM_PATH)/startup_lexington.S
+# Bootloader
+CORE_SRC += $(LEXINGTON_COM_PATH)/bootloader.S
 
 CORE_INC  = $(wildcard $(LEXINGTON_INC_PATH)/*.h) $(wildcard $(LEXINGTON_INC_PATH)/*.hpp)
 

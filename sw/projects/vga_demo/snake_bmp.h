@@ -8,10 +8,10 @@
 
 
 const rgb_t ARROW_BMP[] = {
-    FG, FG, BG, BG,
-    FG, FG, FG, FG,
-    FG, FG, BG, BG,
-    BG, BG, BG, BG
+    VGA_CYAN, FG, FG, VGA_GREEN,
+    FG, FG, FG, VGA_WHITE,
+    FG, FG, FG, VGA_WHITE,
+    VGA_YELLOW, FG, FG, VGA_RED
 };
 
 const rgb_t SNAKE_HEAD_BMP[] = {

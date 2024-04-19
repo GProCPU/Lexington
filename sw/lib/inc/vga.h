@@ -76,24 +76,33 @@ void vga_draw_bitmap(int32_t x, int32_t y, const rgb_t* bmp, int32_t w, int32_t 
                 | (rotate==180) | (rotate==-180) | (rotate==270) | (rotate==-90),
                 "Rotation must be 0, 90, 180, or 270"
     );
+    int32_t sw = w * scale;
+    int32_t sh = h * scale;
     // Rotate performed with frame buffer pointer
     volatile rgb_t* curr = VGA_FRAME_BUFF + (y*VGA_WIDTH) + x;
     switch (rotate) {
+        int32_t tmp;
         case 0:
         case 360:
             // do nothing
             break;
         case 90:
         case -270:
-            curr += w - 1;
+            tmp = sw;
+            sw = sh;
+            sh = tmp;
+            curr += sw - 1;
             break;
         case 180:
         case -180:
-            curr += (h-1) * VGA_WIDTH + w-1;
+            curr += (sh-1) * VGA_WIDTH + sw-1;
             break;
         case 270:
         case -90:
-            curr += ((h-1) * VGA_WIDTH);
+            tmp = sw;
+            sw = sh;
+            sh = tmp;
+            curr += ((sh-1) * VGA_WIDTH);
             break;
     }
     volatile rgb_t* row = curr;

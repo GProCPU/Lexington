@@ -21,10 +21,11 @@ class Snake {
         static const uint32_t DEBOUNCE_PERIOD   = 10;
 
         static const int32_t TILE_SIZE          = 4;
-        static const int32_t TILE_SCALAR        = 3;
+        static const int32_t TILE_SCALAR        = 2;
         static const int32_t SCALED_TILE_SIZE   = (TILE_SIZE * TILE_SCALAR);
         static const int32_t NUM_BUGS           = 3;
         static const int32_t MAX_SIZE           = 32;
+        static const int32_t START_SIZE         = 7;
 
         static const int32_t PADDING_H  = (VGA_WIDTH % TILE_SIZE) + SCALED_TILE_SIZE;
         static const int32_t PADDING_V  = (VGA_HEIGHT % TILE_SIZE) + SCALED_TILE_SIZE;
@@ -88,12 +89,12 @@ class Snake {
         static xyd_t head;
         static int32_t next_dir;
         static fifo<xyd_t, MAX_SIZE> body;
-        static int32_t step_period; // delay between steps in milliseconds (inverse speed)
-        static int32_t prev_step_millis;
-        static int32_t prev_btn_press_millis;
+        static uint32_t step_period; // delay between steps in milliseconds (inverse speed)
+        static uint32_t prev_step_millis;
+        static uint32_t prev_btn_press_millis;
         static xy_t food;
         static xy_t bug;
-        static int32_t bug_points;
+        static uint32_t bug_points;
 
 
 }; // class Snake

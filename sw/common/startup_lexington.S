@@ -4,6 +4,7 @@
 .balign 4
 .global _start
 .global __startup_entry
+.global __startup_main_entry
 .global __startup_main_exit
 
 
@@ -28,6 +29,17 @@ __startup_pointer_init:
     .option norelax
     la      sp, __Lexington_stack_begin  // stack pointer
     .option pop
+
+
+__startup_bootsel:
+    la      t0, 0xFFFFFFB0      // GPIOB (switches on Basys3)
+    sw      zero, 0(t0)         // set input mode
+    li      t1, 0               // default to standard boot in case of bus failure etc.
+    lw      t1, 4(t0)           // read GPIOB input
+    andi    t1, t1, 1           // isolate bit 0
+    beq     zero, t1, __startup_bootsel_skip
+    jal     __bootloader_entry
+__startup_bootsel_skip:
 
 
 // Copy initialized data from ROM to RAM
@@ -80,17 +92,6 @@ __startup_init_main_trap_handler:
     csrw    mtvec, x1                       // apply main trap handler
 
 
-__startup_bootsel:
-    la      t0, 0xFFFFFFB0      // GPIOB (switches on Basys3)
-    sw      zero, 0(t0)         // set input mode
-    li      t1, 0               // default to standard boot in case of bus failure etc.
-    lw      t1, 4(t0)           // read GPIOB input
-    srl     t1, t1, 15          // shift bit 15
-    andi    t1, t1, 1           // isolate bit 15
-    la      t0, main
-    beq     zero, t1, __startup_main_entry
-    la      t0, bootloader_entry
-
 // Call main function
 __startup_main_entry:
     addi    x10, zero, 0    // x10 = a0 = argc = 0
@@ -138,12 +139,6 @@ __startup_trap_handler_end:
     lw      x9, 4(sp)
     addi    sp, sp, +8
     mret
-
-
-// Dummy bootloader entry
-bootloader_entry:
-    .weak   bootloader_entry
-    j       __startup_main_entry
 
 
 
@@ -256,7 +251,9 @@ __UNKNOWN_EX_HANDLER:
     .weak   __LOAD_PAGE_FAULT_HANDLER
     .weak   __STORE_PAGE_FAULT_HANDLER
     .weak   __UNKNOWN_EX_HANDLER
+    j       __DEFAULT_EX_HANDLER
 __DEFAULT_EX_HANDLER:
+    .weak   __DEFAULT_EX_HANDLER
     // Print mcause to LEDs
     li      t0, 0xFFFFFFA0          // GPIOA base address
     li      t1, 0xFFFF              // bitmask

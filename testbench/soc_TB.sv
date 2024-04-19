@@ -1,5 +1,5 @@
-//cmd cd ${PROJ_DIR}/sw/projects/vga_demo && make build dump
-//cmd cp ${PROJ_DIR}/sw/projects/vga_demo/rom.hex .
+//cmd cd ${PROJ_DIR}/sw/projects/uart_demo && make clean build dump
+//cmd cp ${PROJ_DIR}/sw/projects/uart_demo/rom.hex .
 `timescale 1ns/1ps
 
 
@@ -7,15 +7,16 @@ module soc_TB;
 
     localparam CLK_PERIOD = 100;
     localparam CYCLES_PER_MILLI = 1_000_000 / CLK_PERIOD;
-    localparam SIM_MILLIS = 20;
+    localparam SIM_MILLIS = 5;
 
     localparam MAX_CYCLES = SIM_MILLIS * CYCLES_PER_MILLI;
     integer clk_count = 0;
-    integer fail = 0;
+    integer pass_count = 0;
+    integer fail_count = 0;
     integer fid;
 
     // DUT Parameters
-    localparam UART0_BAUD           = 9600;
+    localparam UART0_BAUD           = 115200;
     localparam UART0_FIFO_DEPTH     = 8;
 
     // DUT Ports
@@ -55,6 +56,16 @@ module soc_TB;
     );
 
 
+    logic [15:0] sw;
+    logic btnU, btnL, btnR, btnD;
+    assign gpiob = sw;
+    assign gpioc[11:0] = 0;
+    assign gpioc[12] = btnU;
+    assign gpioc[13] = btnL;
+    assign gpioc[14] = btnR;
+    assign gpioc[15] = btnD;
+
+
     // Core clock
     initial clk = 1;
     initial forever #(CLK_PERIOD/2) clk = ~clk;
@@ -66,6 +77,13 @@ module soc_TB;
 
     // Initialize
     initial begin
+
+        uart0_rx    <= 1;
+        sw          <= 0;
+        btnU        <= 0;
+        btnL        <= 0;
+        btnR        <= 0;
+        btnD        <= 0;
 
         fid = $fopen("soc.log");
         $dumpfile("soc.vcd");
@@ -84,6 +102,55 @@ module soc_TB;
         $write("%1d/%1d ms\n", millis, SIM_MILLIS);
         millis++;
         #(CYCLES_PER_MILLI * CLK_PERIOD);
+    end
+
+
+    // Read UART
+    integer i;
+    logic [7:0] tx_buff;
+    localparam BAUD_PERIOD = 1_000_000_000 / UART0_BAUD;
+    always @(posedge clk) begin
+        if (!rst_n) begin
+        end
+        else begin
+            if (!uart0_tx) begin
+                // Start bit
+                if (!uart0_tx) begin
+                    #(BAUD_PERIOD);
+                    // Data bits
+                    for (i=0; i<8; i++) begin
+                        tx_buff[i] = uart0_tx;
+                        #(BAUD_PERIOD);
+                    end
+                    // Stop bit
+                    $write("%5d    UART0 TX ", clk_count);
+                    $fwrite(fid,"%5d    UART0 TX ", clk_count);
+                    if (tx_buff >= " " && tx_buff <= "~") begin
+                        $write("'%c' (0x%02X)", tx_buff, tx_buff);
+                        $fwrite(fid,"'%c' (0x%02X)", tx_buff, tx_buff);
+                    end
+                    else if (tx_buff == 'h0D) begin // \r
+                        $write("'\\r' (0x%02X)", tx_buff);
+                        $fwrite(fid,"'\\r' (0x%02X)", tx_buff);
+                    end
+                    else if (tx_buff == "\n") begin
+                        $write("'\\n' (0x%02X)", tx_buff);
+                        $fwrite(fid,"'\\n' (0x%02X)", tx_buff);
+                    end
+                    else begin
+                        $write("0x%02X (non-printable)", tx_buff);
+                        $fwrite(fid,"0x%02X (non-printable)", tx_buff);
+                    end
+                    if (!uart0_tx) begin
+                        fail_count++;
+                        $write("        FAIL bad stop bit");
+                        $fwrite(fid,"        FAIL bad stop bit");
+                    end
+                    $write("\n");
+                    $fwrite(fid,"\n");
+                end
+            end
+        end
     end
 
 
@@ -109,13 +176,13 @@ module soc_TB;
     always @(posedge clk) begin
         clk_count <= clk_count + 1;
         if (clk_count >= MAX_CYCLES) begin
-            if (fail) begin
-                $write("\n\nFAILED %d tests\n", fail);
-                $fwrite(fid,"\n\nFailed %d tests\n", fail);
+            if (fail_count || (pass_count<1)) begin
+                $write("\n\nFAILED %d tests\n\n", fail_count);
+                $fwrite(fid,"\n\nFailed %d tests\n\n", fail_count);
             end
             else begin
-                $write("\n\nPASSED all tests\n");
-                $fwrite(fid,"\n\nPASSED all tests\n");
+                $write("\n\nPASSED all tests\n\n");
+                $fwrite(fid,"\n\nPASSED all tests\n\n");
             end
             $fclose(fid);
             $finish();

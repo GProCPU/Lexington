@@ -164,6 +164,7 @@ module soc #(
     rom #(
         .ADDR_WIDTH(ROM_ADDR_WIDTH)
     ) ROM0 (
+        .clk,
         .rd_en1(rom_rd_en1),
         .addr1(rom_addr1),
         .rd_data1(rom_rd_data1),
